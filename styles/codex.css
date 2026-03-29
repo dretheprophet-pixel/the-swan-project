@@ -1,0 +1,1087 @@
+/* =============================================================================
+   THE SWAN PROJECT — codex.css
+   Aged Paper Codex Layer
+   DHARMA Initiative Archive — Recovered Document System
+
+   The codex layer is the counterweight to the terminal. Where terminal is
+   cold, electric, and algorithmic, the codex is warm, textured, and human.
+   Documents in the codex look like they were written by hand, aged in a
+   damp island bunker, and retrieved long after the author had gone.
+
+   Stack:
+     1. CSS Custom Properties (codex design tokens)
+     2. Paper surface system (base, aged, damaged variants)
+     3. Paper texture overlays (noise, grain, staining)
+     4. Torn edge & worn border effects
+     5. Ink & typography
+     6. Glyph system (DHARMA symbols & ornamental marks)
+     7. Marginalia & annotation layer
+     8. Wax seal & stamp elements
+     9. Codex page animations (fade-in, unfurl, reveal)
+    10. Classification stamps
+    11. Component styles (pages, folios, cards)
+    12. Responsive adjustments
+   ============================================================================= */
+
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   1. DESIGN TOKENS
+   ───────────────────────────────────────────────────────────────────────────── */
+
+:root {
+  /* Paper tones — warm, aged, layered */
+  --paper-base:     #f4ead5;   /* fresh-ish parchment                         */
+  --paper-aged:     #e8d5a3;   /* standard aged paper                         */
+  --paper-dark:     #d4b87a;   /* heavily aged, approaching leather           */
+  --paper-shadow:   #c4a060;   /* fold shadow, edge darkening                 */
+  --paper-stain:    #b08040;   /* water/coffee stain color                    */
+  --paper-burn:     #6b3a10;   /* fire-scorched edges                         */
+
+  /* Ink tones — not quite black, period-accurate                              */
+  --ink-fresh:      #1a0e08;   /* recent writing — very dark brown-black      */
+  --ink-old:        #2c1810;   /* standard aged ink                           */
+  --ink-faded:      #5c3820;   /* heavily faded, barely legible               */
+  --ink-ghost:      #8b6040;   /* ghosted / bleed-through from other side     */
+
+  /* Sepia accents — borders, ornaments, stamps                               */
+  --sepia-dark:     #6b4c2a;   /* dominant accent                             */
+  --sepia-mid:      #8b6914;   /* borders, rule lines                         */
+  --sepia-light:    #b89040;   /* highlights, glyph overlays                  */
+  --sepia-pale:     #d4b870;   /* very light — almost blends with paper       */
+
+  /* DHARMA yellow — for official stamps, badge marks                        */
+  --dharma-yellow:  #f5c842;
+  --dharma-orange:  #d4730a;
+  --dharma-black:   #0d0d0d;
+
+  /* Typography */
+  --font-codex:     'IM Fell English', 'Palatino Linotype', 'Book Antiqua', serif;
+  --font-body:      'Crimson Text', 'Georgia', 'Times New Roman', serif;
+  --font-dharma:    'Bebas Neue', 'Impact', sans-serif;
+  --font-terminal:  'Share Tech Mono', 'Courier New', monospace; /* for in-codex annotations */
+
+  /* Shadow system */
+  --shadow-page:    0 4px 20px rgba(44,24,16,0.35), 0 1px 4px rgba(0,0,0,0.5);
+  --shadow-lift:    0 8px 40px rgba(44,24,16,0.45), 0 2px 8px rgba(0,0,0,0.6);
+  --shadow-deep:    0 12px 60px rgba(0,0,0,0.7);
+
+  /* Border system */
+  --border-codex:   2px solid var(--sepia-mid);
+  --border-thin:    1px solid var(--sepia-dark);
+  --border-faint:   1px solid rgba(139,105,20,0.3);
+
+  /* Transition */
+  --ease-unfurl:    cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   2. PAPER SURFACE SYSTEM
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* Base paper — clean-ish, readable */
+.codex-paper {
+  background-color: var(--paper-base);
+  color:            var(--ink-old);
+  font-family:      var(--font-body);
+  position:         relative;
+  isolation:        isolate;
+}
+
+/* Aged paper — standard recovered document */
+.codex-paper--aged {
+  background-color: var(--paper-aged);
+  color:            var(--ink-old);
+}
+
+/* Heavily aged — time-worn, barely surviving */
+.codex-paper--worn {
+  background-color: var(--paper-dark);
+  color:            var(--ink-faded);
+}
+
+/* Dark background context (for when codex sits on a dark page) */
+.codex-paper--float {
+  background-color: var(--paper-aged);
+  box-shadow:       var(--shadow-page);
+}
+
+/* Tonal shift — ambient light from upper left, shadow lower right */
+.codex-paper::before {
+  content:          '';
+  position:         absolute;
+  inset:            0;
+  background:
+    radial-gradient(ellipse 80% 60% at 15% 15%, rgba(255,240,180,0.22) 0%, transparent 60%),
+    radial-gradient(ellipse 70% 50% at 85% 85%, rgba(160,100,40,0.12)  0%, transparent 60%);
+  pointer-events:   none;
+  border-radius:    inherit;
+  z-index:          0;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   3. PAPER TEXTURE OVERLAYS
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* Noise grain — simulates paper fiber texture */
+.codex-grain {
+  position:         relative;
+}
+
+.codex-grain::after {
+  content:          '';
+  position:         absolute;
+  inset:            0;
+  z-index:          1;
+  pointer-events:   none;
+  border-radius:    inherit;
+  /*
+    SVG fractal noise embedded as data URI.
+    Acts as a paper grain / fiber layer.
+    Adjust opacity to control texture intensity.
+  */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.72' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23noise)' opacity='0.07'/%3E%3C/svg%3E");
+  background-size:  300px 300px;
+  mix-blend-mode:   multiply;
+  opacity:          0.6;
+}
+
+/* Water stain — organic blob discoloration */
+.codex-stain {
+  position: relative;
+}
+
+.codex-stain::before {
+  content:          '';
+  position:         absolute;
+  width:            180px;
+  height:           140px;
+  border-radius:    60% 40% 55% 45% / 50% 60% 40% 55%;
+  background:       radial-gradient(
+                      ellipse at center,
+                      rgba(160,100,40,0.18) 0%,
+                      rgba(160,100,40,0.08) 50%,
+                      transparent 75%
+                    );
+  pointer-events:   none;
+  z-index:          1;
+}
+
+/* Multiple stain positions as utilities */
+.codex-stain--tl::before { top: -20px;  left: -20px; }
+.codex-stain--tr::before { top: -20px;  right: -20px; transform: scaleX(-1); }
+.codex-stain--bl::before { bottom: -20px; left: -20px; transform: scaleY(-1); }
+.codex-stain--br::before { bottom: -20px; right: -20px; transform: scale(-1); }
+.codex-stain--center::before {
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 250px; height: 200px;
+}
+
+/* Fox mark — tiny rust-brown aging spots */
+.codex-foxing {
+  position: relative;
+}
+
+.codex-foxing::after {
+  content:          '';
+  position:         absolute;
+  inset:            0;
+  pointer-events:   none;
+  z-index:          1;
+  background-image:
+    radial-gradient(circle at 12%  8%,  rgba(139,80,30,0.25) 0%, transparent 3px),
+    radial-gradient(circle at 87% 15%,  rgba(120,70,25,0.2)  0%, transparent 2px),
+    radial-gradient(circle at 43% 22%,  rgba(150,85,35,0.3)  0%, transparent 2px),
+    radial-gradient(circle at 71%  5%,  rgba(130,75,28,0.2)  0%, transparent 3px),
+    radial-gradient(circle at 28% 91%,  rgba(140,82,32,0.25) 0%, transparent 2px),
+    radial-gradient(circle at 93% 78%,  rgba(125,72,26,0.2)  0%, transparent 3px),
+    radial-gradient(circle at 55% 96%,  rgba(145,84,33,0.25) 0%, transparent 2px),
+    radial-gradient(circle at 7%  62%,  rgba(135,78,30,0.2)  0%, transparent 2px),
+    radial-gradient(circle at 82% 48%,  rgba(128,74,27,0.22) 0%, transparent 3px),
+    radial-gradient(circle at 36% 73%,  rgba(142,82,31,0.2)  0%, transparent 2px);
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   4. TORN EDGE & WORN BORDER EFFECTS
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* Codex border — double-ruled, aged */
+.codex-border {
+  border:     var(--border-codex);
+  box-shadow:
+    0 2px 12px rgba(44,24,16,0.2),
+    inset 0 1px 0 rgba(255,240,180,0.35),
+    inset 0 -1px 0 rgba(100,60,20,0.15);
+}
+
+/* Inner rule — a second border inset from the first */
+.codex-border--double {
+  border:     2px solid var(--sepia-dark);
+  outline:    1px solid var(--sepia-pale);
+  outline-offset: -6px;
+  box-shadow: var(--shadow-page);
+}
+
+/* Faint dotted border — for annotations, marginalia boxes */
+.codex-border--annotate {
+  border:         1px dashed var(--sepia-mid);
+  border-radius:  1px;
+  box-shadow:     inset 0 0 8px rgba(139,105,20,0.06);
+}
+
+/* Torn top edge — SVG clip path creates irregular torn look */
+.codex-torn-top {
+  position: relative;
+  padding-top: 16px;
+}
+
+.codex-torn-top::before {
+  content:          '';
+  position:         absolute;
+  top:              0;
+  left:             0;
+  right:            0;
+  height:           16px;
+  background:       inherit;
+  background-color: var(--paper-aged);
+  clip-path:        polygon(
+    0% 100%, 1.5% 30%, 3% 90%, 5% 15%, 7% 80%, 9% 25%,
+    12% 70%, 15% 10%, 18% 85%, 21% 20%, 24% 75%, 27% 5%,
+    30% 90%, 33% 35%, 36% 95%, 40% 20%, 43% 80%, 47% 10%,
+    50% 75%, 53% 25%, 56% 88%, 60% 15%, 63% 70%, 66% 5%,
+    70% 82%, 73% 30%, 76% 95%, 80% 18%, 83% 75%, 87% 10%,
+    90% 80%, 93% 25%, 96% 90%, 98% 40%, 100% 100%
+  );
+  z-index:          2;
+}
+
+/* Torn bottom edge */
+.codex-torn-bottom {
+  position: relative;
+  padding-bottom: 16px;
+}
+
+.codex-torn-bottom::after {
+  content:          '';
+  position:         absolute;
+  bottom:           0;
+  left:             0;
+  right:            0;
+  height:           16px;
+  background-color: var(--paper-aged);
+  clip-path:        polygon(
+    0% 0%, 2% 75%, 4% 15%, 6% 85%, 9% 20%, 12% 90%,
+    15% 10%, 18% 80%, 21% 25%, 24% 92%, 27% 12%, 30% 78%,
+    33% 20%, 37% 88%, 40% 8%, 43% 82%, 46% 18%, 50% 94%,
+    53% 10%, 56% 76%, 59% 22%, 62% 90%, 65% 5%, 68% 85%,
+    71% 28%, 74% 92%, 77% 12%, 80% 80%, 83% 22%, 86% 88%,
+    89% 15%, 92% 78%, 95% 20%, 97% 86%, 100% 0%
+  );
+  z-index:          2;
+}
+
+/* Fold crease — vertical line simulating a folded page */
+.codex-fold {
+  position:   relative;
+  overflow:   visible;
+}
+
+.codex-fold::after {
+  content:    '';
+  position:   absolute;
+  top:        0;
+  bottom:     0;
+  left:       50%;
+  width:      1px;
+  background: linear-gradient(
+                to bottom,
+                transparent,
+                rgba(100,60,20,0.25) 15%,
+                rgba(100,60,20,0.35) 50%,
+                rgba(100,60,20,0.25) 85%,
+                transparent
+              );
+  pointer-events: none;
+  z-index:    2;
+}
+
+/* Page shadow — cast shadow beneath a floating page */
+.codex-page-shadow {
+  box-shadow:
+    var(--shadow-page),
+    4px 4px 0 rgba(44,24,16,0.08),
+    8px 8px 0 rgba(44,24,16,0.04);
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   5. INK & TYPOGRAPHY
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.codex-font { font-family: var(--font-codex); }
+.codex-body-font { font-family: var(--font-body); }
+
+/* Title / heading */
+.codex-h1 {
+  font-family:    var(--font-codex);
+  font-size:      clamp(1.5rem, 5vw, 2.75rem);
+  line-height:    1.15;
+  color:          var(--ink-fresh);
+  letter-spacing: 0.01em;
+  text-shadow:    0 1px 2px rgba(44,24,16,0.2);
+}
+
+.codex-h1--italic {
+  font-style: italic;
+}
+
+.codex-h2 {
+  font-family:    var(--font-codex);
+  font-size:      clamp(1.2rem, 4vw, 2rem);
+  color:          var(--ink-old);
+  letter-spacing: 0.01em;
+  line-height:    1.2;
+}
+
+.codex-h3 {
+  font-family:    var(--font-codex);
+  font-size:      clamp(1rem, 3vw, 1.4rem);
+  font-style:     italic;
+  color:          var(--ink-faded);
+}
+
+/* Subtitle / subtitle block */
+.codex-subtitle {
+  font-family: var(--font-codex);
+  font-style:  italic;
+  font-size:   1rem;
+  color:       var(--ink-faded);
+  line-height: 1.5;
+  margin-top:  0.5em;
+  opacity:     0.8;
+}
+
+/* Body paragraphs */
+.codex-body {
+  font-family: var(--font-body);
+  font-size:   clamp(1rem, 2vw, 1.125rem);
+  line-height: 1.9;
+  color:       var(--ink-old);
+  max-width:   65ch;
+}
+
+/* Drop cap for first paragraph */
+.codex-body--dropcap::first-letter {
+  font-family:    var(--font-codex);
+  font-size:      3.5em;
+  float:          left;
+  line-height:    0.8;
+  margin-right:   0.08em;
+  margin-top:     0.06em;
+  color:          var(--sepia-dark);
+  text-shadow:    1px 1px 0 rgba(100,60,20,0.3);
+}
+
+/* Faded text — aged or damaged */
+.codex-faded {
+  color:   var(--ink-faded);
+  opacity: 0.75;
+}
+
+.codex-ghost {
+  color:   var(--ink-ghost);
+  opacity: 0.5;
+}
+
+/* Label / field name */
+.codex-label {
+  font-family:    var(--font-terminal); /* deliberate contrast — typewritten labels */
+  font-size:      0.7rem;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color:          var(--sepia-mid);
+  opacity:        0.7;
+}
+
+/* Attribution / footer */
+.codex-attribution {
+  font-family: var(--font-codex);
+  font-style:  italic;
+  font-size:   0.9rem;
+  color:       var(--sepia-dark);
+  opacity:     0.65;
+  text-align:  right;
+  margin-top:  1.5em;
+}
+
+.codex-attribution::before {
+  content: '— ';
+}
+
+/* Selection */
+.codex-paper ::selection {
+  background: var(--sepia-mid);
+  color:      var(--paper-base);
+}
+
+/* Link styling (in-codex cross-references) */
+.codex-link {
+  color:               var(--sepia-dark);
+  text-decoration:     underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 3px;
+  transition:          color 0.2s;
+}
+
+.codex-link:hover {
+  color: var(--ink-fresh);
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   6. GLYPH SYSTEM (DHARMA SYMBOLS & ORNAMENTAL MARKS)
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* Full-page glyph watermark — very faint behind content */
+.codex-glyph-bg {
+  position:   relative;
+}
+
+.codex-glyph-bg::before {
+  content:          attr(data-glyph);
+  position:         absolute;
+  top:              50%;
+  left:             50%;
+  transform:        translate(-50%, -50%);
+  font-size:        clamp(8rem, 30vw, 16rem);
+  font-family:      var(--font-dharma);
+  color:            var(--sepia-mid);
+  opacity:          0.04;
+  pointer-events:   none;
+  user-select:      none;
+  z-index:          0;
+  line-height:      1;
+}
+
+/* Ornamental separator line */
+.codex-ornament {
+  display:        flex;
+  align-items:    center;
+  justify-content: center;
+  gap:            0.75rem;
+  margin:         1.5rem 0;
+  color:          var(--sepia-mid);
+  opacity:        0.45;
+}
+
+.codex-ornament::before,
+.codex-ornament::after {
+  content:    '';
+  flex:       1;
+  height:     1px;
+  background: linear-gradient(90deg, transparent, var(--sepia-mid), transparent);
+  opacity:    0.5;
+}
+
+.codex-ornament__glyph {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+/* Multiple ornament sizes */
+.codex-ornament--sm { margin: 0.75rem 0; }
+.codex-ornament--lg { margin: 2.5rem 0; }
+
+.codex-ornament--lg .codex-ornament__glyph { font-size: 1.4rem; }
+
+/* Corner glyph decorations */
+.codex-corner-glyphs {
+  position:   relative;
+}
+
+.codex-corner-glyphs::before,
+.codex-corner-glyphs::after {
+  font-size:      1.25rem;
+  color:          var(--sepia-mid);
+  opacity:        0.25;
+  position:       absolute;
+  pointer-events: none;
+  user-select:    none;
+  line-height:    1;
+}
+
+.codex-corner-glyphs::before {
+  content:  attr(data-glyph-tl, '✦');
+  top:      8px;
+  left:     10px;
+}
+
+.codex-corner-glyphs::after {
+  content:  attr(data-glyph-br, '✦');
+  bottom:   8px;
+  right:    10px;
+  transform: rotate(180deg);
+}
+
+/* Running header glyph trail */
+.codex-glyph-trail {
+  letter-spacing: 0.5em;
+  color:          var(--sepia-pale);
+  opacity:        0.3;
+  font-size:      0.9rem;
+  user-select:    none;
+}
+
+/* Illuminated initial (decorated first letter block) */
+.codex-illuminated {
+  display:       inline-block;
+  font-family:   var(--font-codex);
+  font-size:     4rem;
+  line-height:   1;
+  float:         left;
+  margin:        0 0.1em 0 0;
+  padding:       0.05em 0.1em;
+  color:         var(--sepia-dark);
+  border:        1px solid var(--sepia-pale);
+  background:    linear-gradient(135deg, var(--paper-aged), var(--paper-base));
+  box-shadow:    inset 0 0 12px rgba(139,105,20,0.1), 0 2px 8px rgba(44,24,16,0.2);
+  position:      relative;
+}
+
+.codex-illuminated::after {
+  content:  '';
+  position: absolute;
+  inset:    3px;
+  border:   1px solid var(--sepia-pale);
+  opacity:  0.4;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   7. MARGINALIA & ANNOTATION LAYER
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* Margin note — small text in the margin, slightly rotated */
+.codex-margin-note {
+  font-family:    var(--font-body);
+  font-style:     italic;
+  font-size:      0.8rem;
+  color:          var(--sepia-dark);
+  opacity:        0.65;
+  transform:      rotate(-1.5deg);
+  line-height:    1.5;
+  max-width:      12ch;
+  border-left:    2px solid var(--sepia-pale);
+  padding-left:   0.5em;
+}
+
+/* Underline annotation — someone highlighted this passage */
+.codex-underline {
+  text-decoration:       underline;
+  text-decoration-color: var(--sepia-mid);
+  text-decoration-style: solid;
+  text-underline-offset: 4px;
+  text-decoration-thickness: 1px;
+}
+
+/* Double underline — more important */
+.codex-underline--double {
+  text-decoration: double underline;
+  text-decoration-color: var(--sepia-dark);
+}
+
+/* Strikethrough — author crossed something out */
+.codex-strikethrough {
+  text-decoration:       line-through;
+  text-decoration-color: var(--ink-old);
+  text-decoration-thickness: 2px;
+  opacity:               0.7;
+}
+
+/* Circled word — another manual annotation */
+.codex-circled {
+  display:       inline-block;
+  border:        1.5px solid var(--sepia-dark);
+  border-radius: 50%;
+  padding:       0 0.3em;
+  opacity:       0.6;
+}
+
+/* Rubber stamp — for "CLASSIFIED", "RECOVERED", etc */
+.codex-stamp {
+  display:       inline-block;
+  font-family:   var(--font-dharma);
+  font-size:     0.9rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color:          var(--sepia-dark);
+  border:         2px solid var(--sepia-dark);
+  padding:        3px 12px;
+  transform:      rotate(-4deg);
+  opacity:        0.5;
+  position:       relative;
+}
+
+/* Ink bleed on stamp */
+.codex-stamp::before {
+  content:    '';
+  position:   absolute;
+  inset:      -1px;
+  border:     1px solid var(--sepia-pale);
+  opacity:    0.4;
+}
+
+/* Paperclip mark — indentation from a clip */
+.codex-paperclip-mark {
+  position:   absolute;
+  top:        12px;
+  right:      24px;
+  width:      24px;
+  height:     40px;
+  border:     2px solid rgba(139,105,20,0.25);
+  border-radius: 10px 10px 0 0;
+  transform:  rotate(8deg);
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   8. WAX SEAL & STAMP ELEMENTS
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* Wax seal — circular embossed decoration */
+.codex-seal {
+  display:        inline-flex;
+  align-items:    center;
+  justify-content: center;
+  width:          72px;
+  height:         72px;
+  border-radius:  50%;
+  background:     radial-gradient(
+                    ellipse at 35% 30%,
+                    #2a1a08,
+                    #1a0c04
+                  );
+  border:         2px solid var(--sepia-dark);
+  box-shadow:
+    0 0 0 3px rgba(107,76,42,0.3),
+    0 3px 12px rgba(44,24,16,0.5),
+    inset 0 1px 0 rgba(255,200,100,0.1);
+  position:       relative;
+  color:          var(--sepia-light);
+  font-size:      1.5rem;
+  font-family:    var(--font-dharma);
+}
+
+/* Seal texture overlay */
+.codex-seal::after {
+  content:          '';
+  position:         absolute;
+  inset:            0;
+  border-radius:    50%;
+  background:       radial-gradient(ellipse at 40% 35%, rgba(255,200,80,0.08) 0%, transparent 55%);
+}
+
+/* DHARMA Octagon stamp */
+.codex-dharma-stamp {
+  display:        inline-flex;
+  align-items:    center;
+  justify-content: center;
+  width:          80px;
+  height:         80px;
+  clip-path:      polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
+  background:     var(--dharma-yellow);
+  color:          var(--dharma-black);
+  font-family:    var(--font-dharma);
+  font-size:      0.65rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  flex-direction: column;
+  gap:            2px;
+  text-align:     center;
+  padding:        8px;
+  position:       relative;
+}
+
+.codex-dharma-stamp--sepia {
+  background: var(--sepia-mid);
+  color:      var(--paper-base);
+  opacity:    0.6;
+  filter:     sepia(1);
+}
+
+/* Classification band — horizontal stamp across top or bottom */
+.codex-classification-band {
+  display:        flex;
+  align-items:    center;
+  justify-content: center;
+  gap:            1rem;
+  padding:        6px 16px;
+  background:     rgba(107,76,42,0.08);
+  border-top:     1px solid var(--sepia-pale);
+  border-bottom:  1px solid var(--sepia-pale);
+}
+
+.codex-classification-band__text {
+  font-family:    var(--font-terminal);
+  font-size:      0.65rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color:          var(--sepia-mid);
+  opacity:        0.6;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   9. CODEX PAGE ANIMATIONS
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* Page fade-in — gentle materializing from nothing */
+.codex-reveal {
+  opacity:    0;
+  transform:  translateY(10px);
+  animation:  codex-reveal 1s var(--ease-unfurl) forwards;
+}
+
+@keyframes codex-reveal {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Stagger delays for page sections */
+.codex-reveal:nth-child(1) { animation-delay: 0.0s; }
+.codex-reveal:nth-child(2) { animation-delay: 0.2s; }
+.codex-reveal:nth-child(3) { animation-delay: 0.4s; }
+.codex-reveal:nth-child(4) { animation-delay: 0.6s; }
+.codex-reveal:nth-child(5) { animation-delay: 0.8s; }
+
+/* Page unfurl — like a scroll or parchment unrolling */
+.codex-unfurl {
+  animation:     codex-unfurl 1.2s var(--ease-unfurl) forwards;
+  transform-origin: top center;
+  overflow:      hidden;
+}
+
+@keyframes codex-unfurl {
+  0%   { clip-path: inset(0 0 100% 0); opacity: 0.4; }
+  30%  { opacity: 1; }
+  100% { clip-path: inset(0 0 0% 0);   opacity: 1; }
+}
+
+/* Ink-write — text draws itself in from left to right */
+.codex-ink-write {
+  overflow:     hidden;
+  white-space:  nowrap;
+  animation:    ink-write 2s var(--ease-unfurl) forwards;
+}
+
+@keyframes ink-write {
+  from { max-width: 0; }
+  to   { max-width: 100%; }
+}
+
+/* Sepia fade — entry fades through a warm sepia layer */
+.codex-sepia-fade {
+  animation: sepia-fade 1.5s ease-out forwards;
+}
+
+@keyframes sepia-fade {
+  0%   { filter: sepia(1) brightness(0.6) contrast(1.2); opacity: 0.3; }
+  50%  { filter: sepia(0.6) brightness(0.9); opacity: 0.8; }
+  100% { filter: sepia(0) brightness(1); opacity: 1; }
+}
+
+/* Paper shimmer — very subtle warm light passing over the page */
+.codex-shimmer {
+  position:   relative;
+  overflow:   hidden;
+}
+
+.codex-shimmer::after {
+  content:          '';
+  position:         absolute;
+  top:              -100%;
+  left:             -100%;
+  width:            60%;
+  height:           200%;
+  background:       linear-gradient(
+                      105deg,
+                      transparent 20%,
+                      rgba(255,240,180,0.08) 50%,
+                      transparent 80%
+                    );
+  transform:        skewX(-20deg);
+  animation:        codex-shimmer 8s ease-in-out infinite;
+  pointer-events:   none;
+}
+
+@keyframes codex-shimmer {
+  0%   { left: -100%; opacity: 0;   }
+  10%  { opacity: 1;  }
+  40%  { opacity: 1;  }
+  50%  { left: 150%; opacity: 0;  }
+  100% { left: 150%; opacity: 0;  }
+}
+
+/* Slow float — very gentle up/down for featured elements */
+.codex-float {
+  animation: codex-float 6s ease-in-out infinite;
+}
+
+@keyframes codex-float {
+  0%, 100% { transform: translateY(0px); }
+  50%      { transform: translateY(-4px); }
+}
+
+/* Age pulse — the document very slightly "breathes" */
+.codex-breathe {
+  animation: codex-breathe 10s ease-in-out infinite;
+}
+
+@keyframes codex-breathe {
+  0%, 100% { filter: brightness(1) contrast(1); }
+  50%      { filter: brightness(1.02) contrast(0.98); }
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   10. CLASSIFICATION STAMPS
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* Base stamp style */
+.codex-class-stamp {
+  display:        inline-flex;
+  align-items:    center;
+  gap:            0.5rem;
+  padding:        4px 12px;
+  border:         1.5px solid;
+  font-family:    var(--font-terminal);
+  font-size:      0.65rem;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  position:       relative;
+}
+
+/* Level 5 — highest clearance (amber) */
+.codex-class-stamp--level5 {
+  color:        #d4730a;
+  border-color: rgba(212,115,10,0.5);
+  background:   rgba(212,115,10,0.06);
+  box-shadow:   0 0 8px rgba(212,115,10,0.15);
+  transform:    rotate(-1deg);
+}
+
+/* Internal (sepia) */
+.codex-class-stamp--internal {
+  color:        var(--sepia-dark);
+  border-color: rgba(107,76,42,0.4);
+  background:   rgba(107,76,42,0.05);
+  transform:    rotate(1.5deg);
+}
+
+/* Recovered (faded ink) */
+.codex-class-stamp--recovered {
+  color:        var(--ink-faded);
+  border-color: rgba(92,56,32,0.35);
+  background:   transparent;
+  transform:    rotate(-0.5deg);
+  opacity:      0.7;
+}
+
+/* Medical (muted cream) */
+.codex-class-stamp--medical {
+  color:        #8b7050;
+  border-color: rgba(139,112,80,0.4);
+  background:   rgba(139,112,80,0.05);
+}
+
+/* Theoretical (purple-sepia) */
+.codex-class-stamp--theoretical {
+  color:        #6b4a6b;
+  border-color: rgba(107,74,107,0.4);
+  background:   rgba(107,74,107,0.04);
+  font-style:   italic;
+  transform:    rotate(1deg);
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   11. COMPONENT STYLES
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* ── Full Codex Page ── */
+.codex-page {
+  position:     relative;
+  padding:      3rem 3.5rem;
+  max-width:    72ch;
+  margin:       0 auto;
+}
+
+@media (max-width: 640px) {
+  .codex-page {
+    padding: 2rem 1.75rem;
+  }
+}
+
+/* ── Codex Card (smaller entry block) ── */
+.codex-card {
+  padding:      1.5rem 2rem;
+  position:     relative;
+  transition:   box-shadow 0.3s var(--ease-unfurl), transform 0.3s var(--ease-unfurl);
+}
+
+.codex-card:hover {
+  box-shadow:   var(--shadow-lift);
+  transform:    translateY(-2px);
+}
+
+/* ── Codex Header block ── */
+.codex-header {
+  text-align:   center;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--sepia-pale);
+}
+
+/* ── Rule lines (like lined paper) ── */
+.codex-ruled {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent calc(1.9rem - 1px),
+    rgba(139,105,20,0.12) calc(1.9rem - 1px),
+    rgba(139,105,20,0.12) 1.9rem
+  );
+  background-attachment: local;
+}
+
+/* ── Tags / subject labels ── */
+.codex-tag {
+  display:        inline-block;
+  font-family:    var(--font-terminal);
+  font-size:      0.6rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color:          var(--sepia-dark);
+  border:         1px solid var(--sepia-pale);
+  padding:        2px 8px;
+  opacity:        0.5;
+  transition:     opacity 0.2s;
+}
+
+.codex-tag:hover { opacity: 0.8; }
+
+/* ── Codex folio number ── */
+.codex-folio {
+  font-family:    var(--font-codex);
+  font-style:     italic;
+  font-size:      0.85rem;
+  color:          var(--sepia-dark);
+  opacity:        0.4;
+}
+
+.codex-folio--left::before  { content: '← '; }
+.codex-folio--right::after  { content: ' →'; }
+
+/* ── Quote block ── */
+.codex-blockquote {
+  border-left:   3px solid var(--sepia-mid);
+  margin:        1.5rem 0 1.5rem 1rem;
+  padding:       0.5rem 1.25rem;
+  font-style:    italic;
+  color:         var(--ink-faded);
+  opacity:       0.85;
+  font-size:     1.05rem;
+  line-height:   1.75;
+  position:      relative;
+}
+
+.codex-blockquote::before {
+  content:    '\201C';
+  font-family: var(--font-codex);
+  font-size:  3rem;
+  color:      var(--sepia-pale);
+  position:   absolute;
+  top:        -0.25rem;
+  left:       0.25rem;
+  line-height: 1;
+  opacity:    0.5;
+}
+
+/* ── Section divider band ── */
+.codex-band {
+  background:   rgba(107,76,42,0.06);
+  border-top:   1px solid var(--sepia-pale);
+  border-bottom: 1px solid var(--sepia-pale);
+  padding:      0.5rem 1rem;
+  text-align:   center;
+}
+
+/* ── Scrollwork / ornamental frame corners ── */
+.codex-framed {
+  padding:    2rem;
+  position:   relative;
+}
+
+.codex-framed::before,
+.codex-framed::after {
+  content:    '';
+  position:   absolute;
+  width:      28px;
+  height:     28px;
+  border-color: var(--sepia-mid);
+  border-style: solid;
+  opacity:    0.35;
+}
+
+.codex-framed::before {
+  top:      8px;
+  left:     8px;
+  border-width: 2px 0 0 2px;
+}
+
+.codex-framed::after {
+  bottom:   8px;
+  right:    8px;
+  border-width: 0 2px 2px 0;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   12. RESPONSIVE ADJUSTMENTS
+   ───────────────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .codex-h1        { font-size: 1.5rem; }
+  .codex-h2        { font-size: 1.2rem; }
+  .codex-body      { font-size: 0.975rem; line-height: 1.8; }
+  .codex-page      { padding: 1.75rem 1.5rem; }
+  .codex-seal      { width: 56px; height: 56px; font-size: 1.2rem; }
+  .codex-dharma-stamp { width: 60px; height: 60px; }
+  .codex-illuminated { font-size: 3rem; }
+}
+
+@media (max-width: 480px) {
+  .codex-h1        { font-size: 1.25rem; }
+  .codex-body      { font-size: 0.9375rem; }
+  .codex-page      { padding: 1.25rem 1rem; }
+  .codex-blockquote { margin-left: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .codex-reveal,
+  .codex-unfurl,
+  .codex-ink-write,
+  .codex-sepia-fade,
+  .codex-shimmer::after,
+  .codex-float,
+  .codex-breathe {
+    animation:  none;
+    opacity:    1;
+    transform:  none;
+    filter:     none;
+    clip-path:  none;
+    max-width:  none;
+  }
+}

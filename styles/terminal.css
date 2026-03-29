@@ -1,0 +1,1106 @@
+/* =============================================================================
+   THE SWAN PROJECT — terminal.css
+   CRT Phosphor Terminal Layer
+   DHARMA Initiative Archive System — Station 3 (The Swan)
+
+   Stack:
+     1. CSS Custom Properties (design tokens)
+     2. Base terminal surface & screen geometry
+     3. Scanline systems (static layer + sweep animation)
+     4. Phosphor glow (text, borders, shadows)
+     5. Vignette & barrel distortion illusion
+     6. CRT flicker & signal degradation
+     7. Cursor animations
+     8. Boot sequence utilities
+     9. Terminal typography
+    10. Interactive states
+    11. Component-level styles (frame, titlebar, status bar)
+    12. Countdown / alert modes
+    13. Responsive adjustments
+   ============================================================================= */
+
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   1. DESIGN TOKENS
+   ───────────────────────────────────────────────────────────────────────────── */
+
+:root {
+  /* Phosphor color scale — amber-shifted green, not pure #00FF00 */
+  --ph-core:        #39ff14;   /* hot center — used for active text, cursors */
+  --ph-bright:      #7fff5f;   /* overdriven — peak glow moments             */
+  --ph-mid:         #2ecc10;   /* comfortable reading level                  */
+  --ph-dim:         #1a7a0a;   /* secondary text, borders, labels            */
+  --ph-ghost:       #0d3d05;   /* very faint — backgrounds, inactive states  */
+  --ph-dark:        #050f02;   /* deepest surface — near-black green         */
+
+  /* Amber accent — for warnings, the Numbers, countdown alerts */
+  --amber-hot:      #f5c842;
+  --amber-warm:     #d4a017;
+  --amber-dim:      #7a5c0a;
+
+  /* Red alert — for failsafe, containment warnings */
+  --red-alert:      #ff3333;
+  --red-dim:        #8b0000;
+  --red-ghost:      #2a0000;
+
+  /* Screen geometry */
+  --screen-radius:  4px;
+  --scanline-gap:   4px;       /* pixel height of one scanline cycle         */
+  --scanline-dark:  0.08;      /* opacity of the dark bands                  */
+  --sweep-duration: 8s;        /* scanline sweep pass duration               */
+
+  /* Glow intensities */
+  --glow-tight:     0 0 6px var(--ph-core);
+  --glow-soft:      0 0 12px rgba(57, 255, 20, 0.4);
+  --glow-wide:      0 0 24px rgba(57, 255, 20, 0.25), 0 0 48px rgba(57, 255, 20, 0.1);
+  --glow-text:      0 0 6px var(--ph-core), 0 0 12px rgba(57, 255, 20, 0.35);
+  --glow-amber:     0 0 10px rgba(245, 200, 66, 0.5);
+  --glow-red:       0 0 12px rgba(255, 51, 51, 0.6);
+
+  /* Typography */
+  --font-terminal:  'Share Tech Mono', 'Courier New', 'Lucida Console', monospace;
+  --font-dharma:    'Bebas Neue', 'Impact', sans-serif;
+
+  /* Timing functions */
+  --ease-crt:       cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-flicker:   steps(1, end);
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   2. BASE TERMINAL SURFACE
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.crt-screen {
+  position:         relative;
+  background:       radial-gradient(
+                      ellipse at 50% 40%,
+                      #0a1f05 0%,
+                      #050f02 60%,
+                      #020802 100%
+                    );
+  border-radius:    var(--screen-radius);
+  overflow:         hidden;
+  isolation:        isolate; /* contain all pseudo-element stacking */
+
+  /* Subtle barrel curve illusion via perspective transform */
+  transform-style:  preserve-3d;
+}
+
+/* Inner phosphor surface — the actual "glass" layer */
+.crt-screen__surface {
+  position:   relative;
+  z-index:    1;
+  padding:    2rem;
+  min-height: 16rem;
+}
+
+/* Full-page terminal background (when the whole viewport is a terminal) */
+.crt-viewport {
+  min-height:       100vh;
+  background:       radial-gradient(
+                      ellipse at 50% 35%,
+                      #081505 0%,
+                      #040b02 55%,
+                      #010401 100%
+                    );
+  position:         relative;
+  overflow:         hidden;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   3. SCANLINE SYSTEMS
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* Static scanline layer — always-on dark horizontal bands */
+.crt-screen::before {
+  content:          '';
+  position:         absolute;
+  inset:            0;
+  z-index:          10;
+  pointer-events:   none;
+  background:       repeating-linear-gradient(
+                      0deg,
+                      transparent                    0px,
+                      transparent                    calc(var(--scanline-gap) - 1px),
+                      rgba(0, 0, 0, var(--scanline-dark)) calc(var(--scanline-gap) - 1px),
+                      rgba(0, 0, 0, var(--scanline-dark)) var(--scanline-gap)
+                    );
+  background-size:  100% var(--scanline-gap);
+}
+
+/* Vignette layer — stacked on top of scanlines */
+.crt-screen::after {
+  content:          '';
+  position:         absolute;
+  inset:            0;
+  z-index:          11;
+  pointer-events:   none;
+  background:       radial-gradient(
+                      ellipse at 50% 50%,
+                      transparent    45%,
+                      rgba(0,0,0,0.35) 75%,
+                      rgba(0,0,0,0.7)  100%
+                    );
+  border-radius:    inherit;
+}
+
+/* Scanline sweep — a bright band that drifts down the screen */
+.crt-scanline-sweep {
+  position:         absolute;
+  top:              0;
+  left:             0;
+  right:            0;
+  height:           120px;
+  z-index:          12;
+  pointer-events:   none;
+  background:       linear-gradient(
+                      to bottom,
+                      transparent,
+                      rgba(57, 255, 20, 0.025) 20%,
+                      rgba(57, 255, 20, 0.055) 50%,
+                      rgba(57, 255, 20, 0.025) 80%,
+                      transparent
+                    );
+  animation:        crt-sweep var(--sweep-duration) linear infinite;
+  will-change:      transform;
+}
+
+@keyframes crt-sweep {
+  0%   { transform: translateY(-120px); opacity: 0; }
+  5%   { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { transform: translateY(100vh); opacity: 0; }
+}
+
+/* Dense scanline variant — for high-intensity CRT feel */
+.crt-screen--dense::before {
+  --scanline-gap:   3px;
+  --scanline-dark:  0.12;
+}
+
+/* Subtle scanline variant — for readable body content */
+.crt-screen--light::before {
+  --scanline-gap:   6px;
+  --scanline-dark:  0.05;
+}
+
+/* Horizontal static noise bars (appear on signal degradation) */
+.crt-noise-bar {
+  position:         absolute;
+  left:             0;
+  right:            0;
+  height:           3px;
+  background:       linear-gradient(
+                      90deg,
+                      transparent 0%,
+                      rgba(57,255,20,0.3) 20%,
+                      rgba(57,255,20,0.1) 50%,
+                      rgba(57,255,20,0.4) 80%,
+                      transparent 100%
+                    );
+  z-index:          13;
+  pointer-events:   none;
+  animation:        noise-drift 12s linear infinite;
+  opacity:          0;
+}
+
+.crt-noise-bar:nth-child(1) { animation-delay:  0s;   animation-duration: 11s; }
+.crt-noise-bar:nth-child(2) { animation-delay: -4s;   animation-duration: 14s; }
+.crt-noise-bar:nth-child(3) { animation-delay: -8s;   animation-duration:  9s; }
+
+@keyframes noise-drift {
+   0%  { transform: translateY(-10px); opacity: 0;    }
+   2%  { opacity: 0.7; }
+  10%  { opacity: 0.3; }
+  50%  { opacity: 0.5; }
+  90%  { opacity: 0.2; }
+  98%  { opacity: 0.6; }
+ 100%  { transform: translateY(110vh); opacity: 0; }
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   4. PHOSPHOR GLOW SYSTEM
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* Text glow — the core phosphor effect */
+.ph-text {
+  color:       var(--ph-core);
+  text-shadow: var(--glow-text);
+  font-family: var(--font-terminal);
+}
+
+.ph-text--bright {
+  color:       var(--ph-bright);
+  text-shadow: 0 0 8px var(--ph-bright), 0 0 20px rgba(127,255,95,0.5), 0 0 40px rgba(57,255,20,0.2);
+}
+
+.ph-text--dim {
+  color:       var(--ph-dim);
+  text-shadow: 0 0 4px rgba(26, 122, 10, 0.4);
+}
+
+.ph-text--ghost {
+  color:       var(--ph-ghost);
+  text-shadow: none;
+}
+
+/* Amber — warnings, numbers, countdowns */
+.ph-text--amber {
+  color:       var(--amber-hot);
+  text-shadow: var(--glow-amber);
+}
+
+/* Red alert text */
+.ph-text--red {
+  color:       var(--red-alert);
+  text-shadow: var(--glow-red);
+}
+
+/* Glow borders */
+.ph-border {
+  border:     1px solid var(--ph-dim);
+  box-shadow: var(--glow-tight), inset 0 0 6px rgba(57,255,20,0.05);
+}
+
+.ph-border--bright {
+  border:     1px solid var(--ph-core);
+  box-shadow: var(--glow-soft), var(--glow-wide), inset 0 0 10px rgba(57,255,20,0.08);
+}
+
+.ph-border--amber {
+  border:     1px solid var(--amber-warm);
+  box-shadow: 0 0 8px rgba(212,160,23,0.4), inset 0 0 6px rgba(245,200,66,0.05);
+}
+
+.ph-border--red {
+  border:     1px solid var(--red-dim);
+  box-shadow: var(--glow-red), inset 0 0 8px rgba(255,51,51,0.04);
+}
+
+/* Pulsing glow box — for active containers */
+.ph-glow-pulse {
+  animation: ph-pulse 2.5s ease-in-out infinite;
+}
+
+@keyframes ph-pulse {
+  0%, 100% {
+    box-shadow: 0 0 6px var(--ph-core), 0 0 16px rgba(57,255,20,0.25);
+  }
+  50% {
+    box-shadow: 0 0 14px var(--ph-core), 0 0 32px rgba(57,255,20,0.45), 0 0 56px rgba(57,255,20,0.15);
+  }
+}
+
+/* Background glow — illuminated surface feel */
+.ph-bg-glow {
+  background: radial-gradient(
+    ellipse at 50% 0%,
+    rgba(57,255,20,0.06) 0%,
+    transparent 60%
+  );
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   5. VIGNETTE & BARREL DISTORTION ILLUSION
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* Corner vignette — deepens at edges to simulate curved glass */
+.crt-vignette {
+  position:       absolute;
+  inset:          0;
+  z-index:        9;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      ellipse 80% 80% at 50% 50%,
+      transparent 50%,
+      rgba(0,0,0,0.20) 70%,
+      rgba(0,0,0,0.55) 90%,
+      rgba(0,0,0,0.80) 100%
+    );
+  border-radius: inherit;
+}
+
+/* Soft edge glow — faint inner light ring, simulates phosphor bloom */
+.crt-bloom {
+  position:       absolute;
+  inset:          0;
+  z-index:        8;
+  pointer-events: none;
+  box-shadow:     inset 0 0 80px rgba(57,255,20,0.04), inset 0 0 20px rgba(57,255,20,0.02);
+  border-radius:  inherit;
+}
+
+/* Corner shadow — extra dark corners */
+.crt-corners::before {
+  content:          '';
+  position:         absolute;
+  inset:            0;
+  z-index:          9;
+  pointer-events:   none;
+  background:
+    radial-gradient(ellipse at 0% 0%,    rgba(0,0,0,0.5) 0%, transparent 35%),
+    radial-gradient(ellipse at 100% 0%,  rgba(0,0,0,0.5) 0%, transparent 35%),
+    radial-gradient(ellipse at 0% 100%,  rgba(0,0,0,0.5) 0%, transparent 35%),
+    radial-gradient(ellipse at 100% 100%,rgba(0,0,0,0.5) 0%, transparent 35%);
+  border-radius: inherit;
+}
+
+/* Reflection streak — faint diagonal light across the "glass" */
+.crt-reflection {
+  position:       absolute;
+  top:            -20%;
+  left:           -10%;
+  width:          60%;
+  height:         80%;
+  z-index:        14;
+  pointer-events: none;
+  background:     linear-gradient(
+                    135deg,
+                    rgba(255,255,255,0.025) 0%,
+                    transparent 50%
+                  );
+  transform:      skewX(-15deg);
+  border-radius:  0 0 100% 0;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   6. FLICKER & SIGNAL DEGRADATION
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* Constant subtle flicker — always on, barely perceptible */
+.crt-flicker {
+  animation: crt-flicker 0.18s var(--ease-flicker) infinite;
+}
+
+@keyframes crt-flicker {
+  0%   { opacity: 1.000; }
+  8%   { opacity: 0.985; }
+  15%  { opacity: 1.000; }
+  22%  { opacity: 0.990; }
+  30%  { opacity: 1.000; }
+  44%  { opacity: 0.978; }
+  50%  { opacity: 1.000; }
+  63%  { opacity: 0.992; }
+  71%  { opacity: 1.000; }
+  85%  { opacity: 0.982; }
+  92%  { opacity: 1.000; }
+ 100%  { opacity: 0.996; }
+}
+
+/* Glitch — momentary signal corruption */
+.crt-glitch {
+  animation: crt-glitch 5s infinite;
+}
+
+.crt-glitch--frequent {
+  animation: crt-glitch 2.5s infinite;
+}
+
+@keyframes crt-glitch {
+   0%, 89%, 100% {
+    transform:  translate(0);
+    filter:     none;
+    opacity:    1;
+  }
+  90% {
+    transform:  translate(-3px, 1px);
+    filter:     hue-rotate(90deg) saturate(2);
+  }
+  91% {
+    transform:  translate(3px, -1px);
+    filter:     hue-rotate(-90deg);
+    opacity:    0.85;
+  }
+  92% {
+    transform:  translate(-2px, 2px);
+    filter:     none;
+  }
+  93% {
+    transform:  translate(2px, -2px);
+    filter:     brightness(1.4);
+    opacity:    0.9;
+  }
+  94% {
+    transform:  translate(0);
+    filter:     none;
+    opacity:    1;
+  }
+}
+
+/* Horizontal RGB split — chromatic aberration on text */
+.crt-aberration {
+  position: relative;
+}
+
+.crt-aberration::before,
+.crt-aberration::after {
+  content:          attr(data-text);
+  position:         absolute;
+  top:              0;
+  left:             0;
+  right:            0;
+  overflow:         hidden;
+  opacity:          0.06;
+  animation:        crt-aber 6s infinite;
+}
+
+.crt-aberration::before {
+  color:        #ff0000;
+  transform:    translateX(-2px);
+}
+
+.crt-aberration::after {
+  color:        #0000ff;
+  transform:    translateX(2px);
+  animation-delay: 0.1s;
+}
+
+@keyframes crt-aber {
+  0%, 92%, 100% { opacity: 0;    transform: translateX(var(--tx, -2px)); }
+  93%           { opacity: 0.12; transform: translateX(calc(var(--tx, -2px) * 1.5)); }
+  96%           { opacity: 0.06; transform: translateX(var(--tx, -2px)); }
+}
+
+/* Screen power-on sweep */
+.crt-power-on {
+  animation: crt-power-on 0.8s var(--ease-crt) forwards;
+  transform-origin: center;
+}
+
+@keyframes crt-power-on {
+  0%   { clip-path: inset(50% 0); opacity: 0; filter: brightness(3); }
+  15%  { clip-path: inset(45% 0); opacity: 0.6; }
+  40%  { clip-path: inset(20% 0); filter: brightness(2); }
+  70%  { clip-path: inset(2% 0);  filter: brightness(1.3); }
+  85%  { clip-path: inset(0%);    filter: brightness(1.1); }
+  100% { clip-path: inset(0%);    filter: brightness(1); opacity: 1; }
+}
+
+/* Screen power-off collapse */
+.crt-power-off {
+  animation: crt-power-off 0.6s var(--ease-crt) forwards;
+}
+
+@keyframes crt-power-off {
+  0%   { clip-path: inset(0%);    filter: brightness(1); }
+  30%  { clip-path: inset(10% 0); filter: brightness(2); }
+  60%  { clip-path: inset(48% 0); filter: brightness(3); }
+  100% { clip-path: inset(50% 0); opacity: 0; }
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   7. CURSOR ANIMATIONS
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* Block cursor (█) — standard terminal cursor */
+.crt-cursor::after {
+  content:    '█';
+  color:      var(--ph-core);
+  text-shadow: var(--glow-text);
+  animation:  cursor-blink 1.1s step-start infinite;
+}
+
+/* Underscore cursor */
+.crt-cursor--line::after {
+  content:    '_';
+  color:      var(--ph-core);
+  text-shadow: var(--glow-text);
+  animation:  cursor-blink 0.9s step-start infinite;
+}
+
+/* Pipe cursor | */
+.crt-cursor--pipe::after {
+  content:    '|';
+  color:      var(--ph-core);
+  text-shadow: var(--glow-text);
+  animation:  cursor-blink 0.85s step-start infinite;
+}
+
+/* Slow blink — for ambient / idle states */
+.crt-cursor--slow::after {
+  animation: cursor-blink 2s step-start infinite;
+}
+
+@keyframes cursor-blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+/* Typing cursor — attaches to end of inline text */
+.crt-typing {
+  border-right: 2px solid var(--ph-core);
+  box-shadow:   1px 0 6px var(--ph-core);
+  padding-right: 2px;
+  animation:    cursor-blink 0.9s step-start infinite;
+}
+
+/* Input field simulation */
+.crt-input {
+  background:   transparent;
+  border:       none;
+  border-bottom: 1px solid var(--ph-dim);
+  color:        var(--ph-core);
+  font-family:  var(--font-terminal);
+  font-size:    0.875rem;
+  letter-spacing: 0.08em;
+  outline:      none;
+  caret-color:  var(--ph-core);
+  text-shadow:  var(--glow-text);
+  padding:      4px 0;
+  width:        100%;
+  transition:   border-color 0.2s;
+}
+
+.crt-input:focus {
+  border-bottom-color: var(--ph-core);
+  box-shadow:          0 2px 8px rgba(57,255,20,0.3);
+}
+
+.crt-input::placeholder {
+  color:   var(--ph-ghost);
+  opacity: 1;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   8. BOOT SEQUENCE UTILITIES
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* Lines that appear one by one during boot */
+.crt-boot-line {
+  overflow:   hidden;
+  max-height: 0;
+  opacity:    0;
+  animation:  boot-reveal 0.05s ease-out forwards;
+}
+
+@keyframes boot-reveal {
+  to { max-height: 2em; opacity: 1; }
+}
+
+/* Stagger helper classes (add more as needed) */
+.crt-boot-line:nth-child(1)  { animation-delay: 0.00s; }
+.crt-boot-line:nth-child(2)  { animation-delay: 0.12s; }
+.crt-boot-line:nth-child(3)  { animation-delay: 0.24s; }
+.crt-boot-line:nth-child(4)  { animation-delay: 0.36s; }
+.crt-boot-line:nth-child(5)  { animation-delay: 0.48s; }
+.crt-boot-line:nth-child(6)  { animation-delay: 0.60s; }
+.crt-boot-line:nth-child(7)  { animation-delay: 0.72s; }
+.crt-boot-line:nth-child(8)  { animation-delay: 0.84s; }
+.crt-boot-line:nth-child(9)  { animation-delay: 0.96s; }
+.crt-boot-line:nth-child(10) { animation-delay: 1.08s; }
+
+/* Progress bar (loading indicator) */
+.crt-progress {
+  height:     3px;
+  background: var(--ph-ghost);
+  position:   relative;
+  overflow:   hidden;
+}
+
+.crt-progress__bar {
+  position:   absolute;
+  top:        0;
+  left:       0;
+  height:     100%;
+  background: var(--ph-core);
+  box-shadow: var(--glow-soft);
+  animation:  crt-load 2s var(--ease-crt) forwards;
+}
+
+@keyframes crt-load {
+  0%   { width: 0%;   }
+  20%  { width: 18%;  }
+  45%  { width: 42%;  }
+  70%  { width: 71%;  }
+  85%  { width: 84%;  }
+  100% { width: 100%; }
+}
+
+/* Fade-in utility — for content that appears after boot */
+.crt-reveal {
+  opacity:    0;
+  animation:  crt-fade-in 0.6s ease-out forwards;
+}
+
+@keyframes crt-fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+
+/* Typewriter text — reveals character by character via clip */
+.crt-typewriter {
+  display:      inline-block;
+  overflow:     hidden;
+  white-space:  nowrap;
+  animation:    typewriter 3s steps(40, end) forwards;
+}
+
+@keyframes typewriter {
+  from { width: 0; }
+  to   { width: 100%; }
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   9. TERMINAL TYPOGRAPHY
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.crt-font { font-family: var(--font-terminal); }
+
+/* Heading sizes */
+.crt-h1 {
+  font-family:    var(--font-terminal);
+  font-size:      clamp(1.25rem, 4vw, 2rem);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color:          var(--ph-core);
+  text-shadow:    var(--glow-text);
+  line-height:    1.2;
+}
+
+.crt-h2 {
+  font-family:    var(--font-terminal);
+  font-size:      clamp(1rem, 3vw, 1.5rem);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color:          var(--ph-core);
+  text-shadow:    0 0 8px rgba(57,255,20,0.4);
+}
+
+.crt-h3 {
+  font-family:    var(--font-terminal);
+  font-size:      1rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color:          var(--ph-dim);
+}
+
+.crt-body {
+  font-family:    var(--font-terminal);
+  font-size:      0.875rem;
+  line-height:    1.7;
+  letter-spacing: 0.04em;
+  color:          var(--ph-mid);
+  text-shadow:    0 0 3px rgba(57,255,20,0.15);
+}
+
+.crt-small {
+  font-family:    var(--font-terminal);
+  font-size:      0.75rem;
+  letter-spacing: 0.08em;
+  color:          var(--ph-dim);
+  opacity:        0.7;
+}
+
+/* Command prompt prefix */
+.crt-prompt::before {
+  content:     '>> ';
+  color:       var(--ph-dim);
+  opacity:     0.6;
+}
+
+/* System label — category tags, field names */
+.crt-label {
+  font-family:    var(--font-terminal);
+  font-size:      0.7rem;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color:          var(--ph-dim);
+  opacity:        0.6;
+}
+
+/* Warning text */
+.crt-warning {
+  font-family:    var(--font-terminal);
+  font-size:      0.875rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color:          var(--red-alert);
+  text-shadow:    var(--glow-red);
+  font-weight:    bold;
+}
+
+/* Numbers sequence — 4 8 15 16 23 42 */
+.crt-numbers {
+  font-family:    var(--font-terminal);
+  font-size:      clamp(1.25rem, 5vw, 2.5rem);
+  letter-spacing: 0.4em;
+  color:          var(--amber-hot);
+  text-shadow:    var(--glow-amber), 0 0 30px rgba(245,200,66,0.2);
+}
+
+/* Tabular / data alignment */
+.crt-mono { font-variant-numeric: tabular-nums; }
+
+/* Selection */
+.crt-screen ::selection {
+  background: var(--ph-core);
+  color:      #000;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   10. INTERACTIVE STATES
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* Clickable terminal row */
+.crt-row {
+  padding:        0.4rem 0.75rem;
+  cursor:         pointer;
+  transition:     background 0.15s, box-shadow 0.15s;
+  border-left:    2px solid transparent;
+}
+
+.crt-row:hover {
+  background:   rgba(57, 255, 20, 0.05);
+  border-left:  2px solid var(--ph-dim);
+}
+
+.crt-row:active {
+  background:   rgba(57, 255, 20, 0.1);
+}
+
+.crt-row--active {
+  background:   rgba(57, 255, 20, 0.08);
+  border-left:  2px solid var(--ph-core);
+  box-shadow:   inset 0 0 12px rgba(57,255,20,0.06);
+}
+
+/* Terminal button */
+.crt-btn {
+  font-family:    var(--font-terminal);
+  font-size:      0.75rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color:          var(--ph-dim);
+  background:     transparent;
+  border:         1px solid var(--ph-ghost);
+  padding:        0.4rem 1rem;
+  cursor:         pointer;
+  transition:     all 0.2s;
+  position:       relative;
+  overflow:       hidden;
+}
+
+.crt-btn::before {
+  content:    '';
+  position:   absolute;
+  inset:      0;
+  background: linear-gradient(90deg, transparent, rgba(57,255,20,0.08), transparent);
+  transform:  translateX(-100%);
+  transition: transform 0.4s;
+}
+
+.crt-btn:hover {
+  color:        var(--ph-core);
+  border-color: var(--ph-dim);
+  text-shadow:  var(--glow-text);
+  box-shadow:   var(--glow-tight);
+}
+
+.crt-btn:hover::before {
+  transform: translateX(100%);
+}
+
+.crt-btn:active {
+  transform:  scale(0.97);
+  box-shadow: inset 0 0 8px rgba(57,255,20,0.2);
+}
+
+/* Disabled state */
+.crt-btn:disabled,
+.crt-btn--disabled {
+  opacity:    0.3;
+  cursor:     not-allowed;
+  box-shadow: none;
+}
+
+/* Hover glow on any interactive element */
+.crt-interactive {
+  transition: box-shadow 0.25s, border-color 0.25s, text-shadow 0.25s;
+}
+
+.crt-interactive:hover {
+  box-shadow:   var(--glow-soft);
+  border-color: var(--ph-core);
+  text-shadow:  var(--glow-text);
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   11. COMPONENT STYLES
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* ── Terminal Frame / Window Chrome ── */
+.crt-frame {
+  background:   #0a0a0a;
+  border:       1px solid var(--ph-ghost);
+  border-radius: 4px;
+  overflow:     hidden;
+  box-shadow:   0 4px 32px rgba(0,0,0,0.8), 0 0 0 1px rgba(57,255,20,0.04);
+}
+
+.crt-titlebar {
+  display:         flex;
+  align-items:     center;
+  gap:             8px;
+  padding:         7px 14px;
+  background:      linear-gradient(180deg, #12200a 0%, #0a1505 100%);
+  border-bottom:   1px solid var(--ph-ghost);
+  user-select:     none;
+}
+
+.crt-titlebar__dot {
+  width:        10px;
+  height:       10px;
+  border-radius: 50%;
+  flex-shrink:  0;
+}
+
+.crt-titlebar__dot--red    { background: #6b1a1a; box-shadow: 0 0 4px rgba(139,0,0,0.4); }
+.crt-titlebar__dot--yellow { background: #6b5a0a; box-shadow: 0 0 4px rgba(139,120,0,0.4); }
+.crt-titlebar__dot--green  { background: var(--ph-ghost); box-shadow: 0 0 4px rgba(57,255,20,0.3); }
+
+.crt-titlebar__label {
+  font-family:    var(--font-terminal);
+  font-size:      0.7rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color:          var(--ph-dim);
+  opacity:        0.7;
+  margin-left:    8px;
+  flex:           1;
+}
+
+.crt-statusbar {
+  display:        flex;
+  align-items:    center;
+  justify-content: space-between;
+  padding:        5px 14px;
+  background:     rgba(0,0,0,0.5);
+  border-top:     1px solid var(--ph-ghost);
+}
+
+.crt-statusbar__item {
+  font-family:    var(--font-terminal);
+  font-size:      0.65rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color:          var(--ph-dim);
+  opacity:        0.4;
+}
+
+/* ── Station Badge — terminal variant ── */
+.crt-badge {
+  display:         inline-flex;
+  flex-direction:  column;
+  align-items:     center;
+  justify-content: center;
+  clip-path:       polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
+  background:      radial-gradient(ellipse at 35% 30%, #0d2a08, #020a01);
+  border:          1px solid var(--ph-dim);
+  box-shadow:      0 0 0 2px #000, 0 0 0 3px var(--ph-ghost), var(--glow-soft);
+  transition:      box-shadow 0.4s;
+}
+
+.crt-badge:hover {
+  box-shadow: 0 0 0 2px #000, 0 0 0 3px var(--ph-dim), var(--glow-soft), var(--glow-wide);
+}
+
+/* ── Separator / Divider ── */
+.crt-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1.25rem 0;
+}
+
+.crt-divider::before,
+.crt-divider::after {
+  content:    '';
+  flex:       1;
+  height:     1px;
+  background: linear-gradient(90deg, transparent, var(--ph-ghost), transparent);
+}
+
+.crt-divider__glyph {
+  color:       var(--ph-ghost);
+  font-family: var(--font-terminal);
+  font-size:   0.8rem;
+  opacity:     0.6;
+}
+
+/* ── Tag chips ── */
+.crt-tag {
+  display:        inline-block;
+  font-family:    var(--font-terminal);
+  font-size:      0.65rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color:          var(--ph-ghost);
+  border:         1px solid var(--ph-ghost);
+  padding:        2px 8px;
+  opacity:        0.5;
+  transition:     all 0.2s;
+}
+
+.crt-tag:hover {
+  color:        var(--ph-dim);
+  border-color: var(--ph-dim);
+  opacity:      0.8;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   12. COUNTDOWN / ALERT MODES
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* The Numbers — full-screen flash overlay */
+.crt-numbers-overlay {
+  position:   fixed;
+  inset:      0;
+  z-index:    9999;
+  display:    flex;
+  flex-direction: column;
+  align-items:    center;
+  justify-content: center;
+  background: rgba(0,0,0,0.92);
+  animation:  overlay-in 0.3s ease-out forwards;
+}
+
+@keyframes overlay-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.crt-numbers-overlay__seq {
+  font-family:    var(--font-terminal);
+  font-size:      clamp(2.5rem, 10vw, 5rem);
+  letter-spacing: 0.5em;
+  color:          var(--ph-core);
+  text-shadow:    0 0 20px var(--ph-core), 0 0 60px rgba(57,255,20,0.4), 0 0 100px rgba(57,255,20,0.15);
+  animation:      crt-glitch 3s infinite, ph-pulse 1.5s ease-in-out infinite;
+}
+
+/* Countdown alert — amber pulsing box */
+.crt-countdown {
+  display:     flex;
+  align-items: center;
+  gap:         1rem;
+  padding:     0.75rem 1.25rem;
+  border:      1px solid var(--amber-dim);
+  background:  rgba(245,200,66,0.04);
+  box-shadow:  0 0 12px rgba(245,200,66,0.2);
+  animation:   countdown-pulse 1s ease-in-out infinite;
+}
+
+@keyframes countdown-pulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(245,200,66,0.2); border-color: var(--amber-dim); }
+  50%       { box-shadow: 0 0 20px rgba(245,200,66,0.45); border-color: var(--amber-warm); }
+}
+
+.crt-countdown__timer {
+  font-family:    var(--font-terminal);
+  font-size:      2rem;
+  letter-spacing: 0.1em;
+  color:          var(--amber-hot);
+  text-shadow:    var(--glow-amber);
+  font-variant-numeric: tabular-nums;
+}
+
+.crt-countdown__label {
+  font-family:    var(--font-terminal);
+  font-size:      0.7rem;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color:          var(--amber-dim);
+}
+
+/* Critical alert — red flashing state */
+.crt-alert {
+  border:     1px solid var(--red-dim);
+  background: var(--red-ghost);
+  box-shadow: var(--glow-red);
+  animation:  alert-flash 0.5s step-start infinite;
+}
+
+@keyframes alert-flash {
+  0%, 100% { background: var(--red-ghost); }
+  50%      { background: rgba(139,0,0,0.15); }
+}
+
+/* Failsafe button */
+.crt-failsafe-btn {
+  font-family:    var(--font-terminal);
+  font-size:      0.75rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color:          var(--red-alert);
+  background:     var(--red-ghost);
+  border:         2px solid var(--red-dim);
+  padding:        0.5rem 1.5rem;
+  cursor:         pointer;
+  position:       relative;
+  overflow:       hidden;
+  transition:     all 0.2s;
+}
+
+.crt-failsafe-btn::before {
+  content:    '';
+  position:   absolute;
+  inset:      0;
+  background: repeating-linear-gradient(
+                -45deg,
+                transparent,
+                transparent 4px,
+                rgba(255,51,51,0.04) 4px,
+                rgba(255,51,51,0.04) 8px
+              );
+}
+
+.crt-failsafe-btn:hover {
+  background: rgba(139,0,0,0.2);
+  box-shadow: var(--glow-red), 0 0 30px rgba(255,51,51,0.2);
+  color:      #ff6666;
+}
+
+.crt-failsafe-btn:active {
+  transform: scale(0.97);
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   13. RESPONSIVE ADJUSTMENTS
+   ───────────────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .crt-numbers      { font-size: 1.25rem; letter-spacing: 0.25em; }
+  .crt-h1           { font-size: 1.125rem; }
+  .crt-body         { font-size: 0.8125rem; }
+  .crt-titlebar     { padding: 5px 10px; }
+  .crt-frame        { border-radius: 2px; }
+  --sweep-duration:  12s; /* slow down sweep on small screens */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .crt-flicker,
+  .crt-glitch,
+  .crt-glitch--frequent,
+  .crt-scanline-sweep,
+  .ph-glow-pulse,
+  .crt-numbers-overlay__seq,
+  .crt-countdown,
+  .crt-alert {
+    animation: none;
+  }
+
+  .crt-noise-bar { display: none; }
+}
