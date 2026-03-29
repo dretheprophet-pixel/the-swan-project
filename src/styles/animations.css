@@ -1,0 +1,645 @@
+/* =============================================================================
+   THE SWAN PROJECT — animations.css
+   LOST-Themed Animation Layer
+
+   All keyframes and animation utility classes for the hybrid terminal/codex
+   aesthetic. Organized by effect category. Import after terminal.css and
+   codex.css so these definitions take precedence where names overlap.
+
+   Categories:
+     1. Signal & Glitch
+     2. Cursor Systems
+     3. CRT Screen Distortion
+     4. Failsafe Drama
+     5. Dharma Glyph Flicker
+     6. Codex Paper Animations
+     7. Ambient / Atmospheric
+     8. Reduced Motion Overrides
+   ============================================================================= */
+
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   1. SIGNAL & GLITCH
+   Rare, momentary corruptions. Felt more than seen.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/*
+  signal-corrupt — very subtle. Text wavers slightly then snaps back.
+  Fires every 7s, corruption window is ~200ms. On terminal body text.
+*/
+@keyframes signal-corrupt {
+  0%,   87%,  100% { opacity: 1;    transform: translate(0, 0)   skewX(0deg);  filter: none; }
+  88%              { opacity: 0.85; transform: translate(-1px, 0) skewX(-0.4deg); filter: brightness(1.3); }
+  89%              { opacity: 1;    transform: translate(1px, 0)  skewX(0.2deg);  filter: none; }
+  90%              { opacity: 0.9;  transform: translate(0, 1px)  skewX(0deg);  filter: brightness(0.9); }
+  91%              { opacity: 1;    transform: translate(0, 0)    skewX(0deg);  filter: none; }
+}
+
+.anim-signal-corrupt {
+  animation: signal-corrupt 7s steps(1, end) infinite;
+}
+
+/*
+  text-glitch — harder corruption on headings. RGB split + positional jerk.
+  Fires every ~9s, very brief window.
+*/
+@keyframes text-glitch {
+  0%,   91%,  100% {
+    transform: translate(0);
+    text-shadow: 0 0 8px rgba(57,255,20,0.4);
+    clip-path: none;
+  }
+  92% {
+    transform: translate(-3px, 0);
+    text-shadow:
+      -2px 0 rgba(255,0,80,0.7),
+       2px 0 rgba(0,255,240,0.7),
+       0 0 8px rgba(57,255,20,0.4);
+    clip-path: inset(10% 0 80% 0);
+  }
+  93% {
+    transform: translate(3px, 0);
+    text-shadow:
+       2px 0 rgba(255,0,80,0.7),
+      -2px 0 rgba(0,255,240,0.7);
+    clip-path: inset(40% 0 40% 0);
+  }
+  94% {
+    transform: translate(-1px, 0);
+    text-shadow: 0 0 12px rgba(57,255,20,0.8);
+    clip-path: inset(70% 0 10% 0);
+  }
+  95% {
+    transform: translate(0);
+    text-shadow: 0 0 8px rgba(57,255,20,0.4);
+    clip-path: none;
+  }
+}
+
+.anim-text-glitch {
+  animation: text-glitch 9s ease-in-out infinite;
+}
+
+/*
+  interference-bar — a faint bright horizontal band that occasionally
+  sweeps across the terminal body. Simulates VHS tracking interference.
+*/
+@keyframes interference-bar {
+   0%  { top: -8%; opacity: 0; }
+   2%  { opacity: 0.6; }
+  12%  { opacity: 0.3; }
+  35%  { top: 110%; opacity: 0.5; }
+  36%  { opacity: 0; top: 110%; }
+ 100%  { opacity: 0; top: 110%; }
+}
+
+.anim-interference {
+  position:       absolute;
+  left:           0;
+  right:          0;
+  height:         4px;
+  pointer-events: none;
+  z-index:        20;
+  background:     linear-gradient(
+                    90deg,
+                    transparent 0%,
+                    rgba(57,255,20,0.15) 15%,
+                    rgba(57,255,20,0.35) 40%,
+                    rgba(57,255,20,0.15) 85%,
+                    transparent 100%
+                  );
+  animation: interference-bar 11s ease-in-out infinite;
+}
+
+.anim-interference:nth-child(2) {
+  height:            2px;
+  background:        linear-gradient(90deg, transparent, rgba(57,255,20,0.2), transparent);
+  animation-delay:  -4s;
+  animation-duration: 14s;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   2. CURSOR SYSTEMS
+   Multiple cursor variants with phosphor glow.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+@keyframes cursor-pulse-blink {
+  0%,  45% { opacity: 1;   text-shadow: 0 0 6px #39ff14, 0 0 12px rgba(57,255,20,0.4); }
+  50%, 95% { opacity: 0;   text-shadow: none; }
+  100%     { opacity: 1; }
+}
+
+/* Block cursor with phosphor glow — for boot sequence and body end */
+.anim-cursor::after {
+  content:     '█';
+  color:       #39ff14;
+  text-shadow: 0 0 6px #39ff14, 0 0 14px rgba(57,255,20,0.35);
+  animation:   cursor-pulse-blink 1.1s step-start infinite;
+  margin-left: 2px;
+}
+
+/* Slow idle cursor — for status bars */
+.anim-cursor--slow::after {
+  content:     '█';
+  color:       #39ff14;
+  opacity:     0.4;
+  animation:   cursor-pulse-blink 2.4s step-start infinite;
+  margin-left: 2px;
+}
+
+/* Underscore cursor */
+.anim-cursor--line::after {
+  content:   '_';
+  color:     #39ff14;
+  animation: cursor-pulse-blink 0.9s step-start infinite;
+  margin-left: 1px;
+}
+
+/* Pipe cursor — for inline inputs */
+.anim-cursor--pipe::after {
+  content:     '|';
+  color:       #39ff14;
+  font-weight: 100;
+  animation:   cursor-pulse-blink 0.85s step-start infinite;
+  margin-left: 1px;
+}
+
+/*
+  Typing cursor — wraps element in a right-border that blinks.
+  Apply directly to a <span> wrapping the last character.
+*/
+.anim-typing-cursor {
+  border-right:  2px solid #39ff14;
+  padding-right: 2px;
+  box-shadow:    2px 0 8px rgba(57,255,20,0.5);
+  animation:     cursor-pulse-blink 0.95s step-start infinite;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   3. CRT SCREEN DISTORTION
+   Subtle. The screen itself is slightly alive.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/*
+  screen-breathe — very slow, very subtle overall brightness oscillation.
+  The phosphor surface gently pulses like something is drawing power.
+*/
+@keyframes screen-breathe {
+  0%,  100% { filter: brightness(1)    contrast(1); }
+  30%        { filter: brightness(1.02) contrast(0.99); }
+  60%        { filter: brightness(0.98) contrast(1.01); }
+}
+
+.anim-screen-breathe {
+  animation: screen-breathe 12s ease-in-out infinite;
+}
+
+/*
+  screen-flicker — occasional full-screen brightness drop.
+  Like the power momentarily dipping. Fires every ~15s.
+*/
+@keyframes screen-flicker {
+  0%,   93%,  100% { opacity: 1; }
+  94%              { opacity: 0.88; }
+  94.5%            { opacity: 1;    }
+  95%              { opacity: 0.92; }
+  95.5%            { opacity: 1;    }
+  96%              { opacity: 0.85; }
+  96.3%            { opacity: 1;    }
+}
+
+.anim-screen-flicker {
+  animation: screen-flicker 15s steps(1, end) infinite;
+}
+
+/*
+  horizontal-roll — very rare. Screen appears to "roll" vertically once.
+  Simulates a TV losing vertical sync. Fires every ~30s.
+*/
+@keyframes horizontal-roll {
+  0%,   96%,  100% { transform: translateY(0); filter: none; }
+  97%              { transform: translateY(-3px); filter: brightness(1.1) contrast(1.1); }
+  97.5%            { transform: translateY(2px);  filter: brightness(0.95); }
+  98%              { transform: translateY(-1px); filter: none; }
+  98.5%            { transform: translateY(0);    }
+}
+
+.anim-screen-roll {
+  animation: horizontal-roll 30s ease-in-out infinite;
+}
+
+/*
+  vignette-pulse — the dark vignette corners deepen then lighten slowly.
+  Applied to the vignette overlay element.
+*/
+@keyframes vignette-pulse {
+  0%,  100% { opacity: 1; }
+  50%        { opacity: 0.75; }
+}
+
+.anim-vignette-pulse {
+  animation: vignette-pulse 20s ease-in-out infinite;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   4. FAILSAFE DRAMA
+   Phase-aware. Each phase has its own animation state.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/*
+  confirm-pulse — amber/red border pulse during the confirm phase.
+  Creates urgency without being alarming.
+*/
+@keyframes confirm-pulse {
+  0%,  100% {
+    box-shadow: 0 0 6px rgba(180,0,0,0.3), inset 0 0 4px rgba(180,0,0,0.1);
+    border-color: rgba(139,0,0,0.6);
+  }
+  50% {
+    box-shadow: 0 0 18px rgba(220,0,0,0.6), 0 0 36px rgba(200,0,0,0.2), inset 0 0 8px rgba(180,0,0,0.15);
+    border-color: rgba(200,0,0,0.9);
+  }
+}
+
+.anim-confirm-pulse {
+  animation: confirm-pulse 0.8s ease-in-out infinite;
+}
+
+/*
+  failsafe-activate — the moment of activation. Dramatic red flash sequence.
+  Applied to the button casing on activation.
+*/
+@keyframes failsafe-activate {
+  0%   { box-shadow: 0 0 0 rgba(255,0,0,0); }
+  5%   { box-shadow: 0 0 60px rgba(255,0,0,0.9), 0 0 120px rgba(255,0,0,0.5); filter: brightness(2); }
+  10%  { box-shadow: 0 0 30px rgba(255,0,0,0.6), 0 0 80px rgba(255,0,0,0.3);  filter: brightness(1.5); }
+  20%  { box-shadow: 0 0 20px rgba(255,0,0,0.5), 0 0 50px rgba(255,0,0,0.2);  filter: brightness(1.2); }
+  100% { box-shadow: 0 0 10px rgba(255,0,0,0.3), 0 0 30px rgba(255,0,0,0.1);  filter: brightness(1); }
+}
+
+.anim-failsafe-activate {
+  animation: failsafe-activate 3s ease-out forwards;
+}
+
+/*
+  failsafe-shake — the container shakes on activation.
+*/
+@keyframes failsafe-shake {
+  0%,  100% { transform: translate(0, 0); }
+  10%        { transform: translate(-4px, 1px); }
+  20%        { transform: translate(4px, -2px); }
+  30%        { transform: translate(-3px, 2px); }
+  40%        { transform: translate(3px, -1px); }
+  50%        { transform: translate(-2px, 1px); }
+  60%        { transform: translate(2px, 0px);  }
+  70%        { transform: translate(-1px, 1px); }
+  80%        { transform: translate(1px, -1px); }
+  90%        { transform: translate(0, 1px);    }
+}
+
+.anim-failsafe-shake {
+  animation: failsafe-shake 0.5s ease-out forwards;
+}
+
+/*
+  transmission-appear — the transmission message materializes from noise.
+*/
+@keyframes transmission-appear {
+  0%   { opacity: 0; filter: blur(4px) brightness(2); letter-spacing: 0.5em; }
+  20%  { opacity: 0.6; filter: blur(2px) brightness(1.5); letter-spacing: 0.3em; }
+  40%  { opacity: 0.8; filter: blur(1px); letter-spacing: 0.2em; }
+  60%  { opacity: 1;   filter: none;      letter-spacing: 0.15em; }
+  100% { opacity: 1;   filter: none;      letter-spacing: 0.1em; }
+}
+
+.anim-transmission-appear {
+  animation: transmission-appear 1.2s ease-out forwards;
+}
+
+/*
+  cooldown-drain — the red glow slowly drains away during cooldown.
+*/
+@keyframes cooldown-drain {
+  0%   { box-shadow: 0 0 20px rgba(255,0,0,0.4); border-color: rgba(139,0,0,0.6); }
+  100% { box-shadow: none;                        border-color: rgba(139,0,0,0.2); }
+}
+
+.anim-cooldown-drain {
+  animation: cooldown-drain 2s ease-out forwards;
+}
+
+/*
+  red-scan — a slow red scanline that drifts down during the activated state.
+*/
+@keyframes red-scan {
+  0%   { top: -10%; opacity: 0; }
+  5%   { opacity: 0.4; }
+  90%  { opacity: 0.3; }
+  100% { top: 110%; opacity: 0; }
+}
+
+.anim-red-scan {
+  position:   absolute;
+  left:       0;
+  right:      0;
+  height:     2px;
+  background: linear-gradient(90deg, transparent, rgba(255,0,0,0.4), transparent);
+  pointer-events: none;
+  animation:  red-scan 2s linear infinite;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   5. DHARMA GLYPH FLICKER
+   The symbols of the initiative are unstable. Occasionally they falter.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/*
+  glyph-flicker — the main DHARMA ☯ logo. Irregular opacity drops.
+  Slow enough to feel like aging electronics, not a strobe.
+*/
+@keyframes glyph-flicker {
+  0%,   88%,  100% { opacity: 1;    filter: brightness(1); }
+  89%              { opacity: 0.6;  filter: brightness(0.8); }
+  89.5%            { opacity: 1;    filter: brightness(1.3); }
+  90%              { opacity: 0.75; filter: brightness(0.9); }
+  90.5%            { opacity: 1;    filter: brightness(1); }
+  91%              { opacity: 0.85; }
+  91.5%            { opacity: 1; }
+}
+
+.anim-glyph-flicker {
+  animation: glyph-flicker 8s ease-in-out infinite;
+}
+
+/*
+  glyph-watermark-pulse — for the large background glyph on codex pages.
+  Very slow, almost imperceptible opacity drift.
+*/
+@keyframes glyph-watermark-pulse {
+  0%,  100% { opacity: 0.035; }
+  40%        { opacity: 0.055; }
+  70%        { opacity: 0.025; }
+}
+
+.anim-glyph-watermark {
+  animation: glyph-watermark-pulse 18s ease-in-out infinite;
+}
+
+/*
+  station-symbol-idle — the symbol inside the station badge.
+  Gentle brightness oscillation, occasional micro-flicker.
+*/
+@keyframes station-symbol-idle {
+  0%,  100%  { filter: brightness(1)    drop-shadow(0 0 4px currentColor); }
+  30%         { filter: brightness(1.15) drop-shadow(0 0 8px currentColor); }
+  60%         { filter: brightness(0.9)  drop-shadow(0 0 2px currentColor); }
+  85%         { filter: brightness(1)    drop-shadow(0 0 4px currentColor); }
+  86%         { filter: brightness(0.7)  drop-shadow(0 0 1px currentColor); }
+  86.5%       { filter: brightness(1.2)  drop-shadow(0 0 6px currentColor); }
+  87%         { filter: brightness(1)    drop-shadow(0 0 4px currentColor); }
+}
+
+.anim-station-symbol {
+  animation: station-symbol-idle 10s ease-in-out infinite;
+}
+
+/*
+  header-number-flicker — the daily number accent in the header.
+  Amber color with occasional dim-then-restore.
+*/
+@keyframes header-number-flicker {
+  0%,  94%,  100% { opacity: 0.4; }
+  95%              { opacity: 0.15; }
+  96%              { opacity: 0.5;  }
+  97%              { opacity: 0.2;  }
+  98%              { opacity: 0.4;  }
+}
+
+.anim-header-number {
+  animation: header-number-flicker 12s steps(1, end) infinite;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   6. CODEX PAPER ANIMATIONS
+   Warm, organic. The document breathes.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/*
+  codex-drift — the entire page very slowly shifts ±1px vertically.
+  Like a page resting on an uneven surface.
+*/
+@keyframes codex-drift {
+  0%,  100% { transform: translateY(0px); }
+  33%        { transform: translateY(-1px); }
+  66%        { transform: translateY(1px); }
+}
+
+.anim-codex-drift {
+  animation: codex-drift 25s ease-in-out infinite;
+}
+
+/*
+  ink-settle — text slightly sharpens then softens.
+  Like ink absorbing into old paper.
+*/
+@keyframes ink-settle {
+  0%,  100% { filter: blur(0px) contrast(1); }
+  50%        { filter: blur(0.2px) contrast(0.98); }
+}
+
+.anim-ink-settle {
+  animation: ink-settle 30s ease-in-out infinite;
+}
+
+/*
+  sepia-breathe — the paper surface warms and cools very slightly.
+*/
+@keyframes sepia-breathe {
+  0%,  100% { filter: sepia(0) brightness(1); }
+  50%        { filter: sepia(0.04) brightness(1.01); }
+}
+
+.anim-sepia-breathe {
+  animation: sepia-breathe 20s ease-in-out infinite;
+}
+
+/*
+  ornament-appear — decorative glyphs fade in with a slight scale.
+  Used on the codex ornament row.
+*/
+@keyframes ornament-appear {
+  from { opacity: 0; transform: scale(0.8); letter-spacing: 0.6em; }
+  to   { opacity: 1; transform: scale(1);   letter-spacing: 0.4em; }
+}
+
+.anim-ornament-appear {
+  animation: ornament-appear 1.5s ease-out forwards;
+  opacity: 0;
+}
+
+/*
+  stamp-appear — classification stamp materializes with a slight rotation snap.
+*/
+@keyframes stamp-appear {
+  0%   { opacity: 0; transform: rotate(-3deg) scale(1.1); }
+  60%  { opacity: 1; transform: rotate(0.5deg) scale(0.98); }
+  100% { opacity: 0.5; transform: rotate(0deg) scale(1); }
+}
+
+.anim-stamp-appear {
+  animation: stamp-appear 0.8s ease-out forwards;
+  opacity: 0;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   7. AMBIENT / ATMOSPHERIC
+   Passive effects that keep the UI feeling alive.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/*
+  phosphor-text-breathe — body text glow inhales and exhales.
+  Very subtle. The screen is still on.
+*/
+@keyframes phosphor-breathe {
+  0%,  100% { text-shadow: 0 0 4px rgba(57,255,20,0.2); }
+  50%        { text-shadow: 0 0 6px rgba(57,255,20,0.35); }
+}
+
+.anim-phosphor-breathe {
+  animation: phosphor-breathe 8s ease-in-out infinite;
+}
+
+/*
+  status-dot-pulse — the active indicator dot in the header/titlebar.
+  More organic than a simple opacity pulse.
+*/
+@keyframes status-dot-pulse {
+  0%,  100% {
+    transform:  scale(1);
+    box-shadow: 0 0 4px #39ff14;
+    opacity:    1;
+  }
+  40% {
+    transform:  scale(1.3);
+    box-shadow: 0 0 10px #39ff14, 0 0 20px rgba(57,255,20,0.3);
+    opacity:    1;
+  }
+  70% {
+    transform:  scale(0.9);
+    box-shadow: 0 0 3px #39ff14;
+    opacity:    0.8;
+  }
+}
+
+.anim-status-dot {
+  animation: status-dot-pulse 2.5s ease-in-out infinite;
+}
+
+/*
+  border-creep — a phosphor border that slowly brightens on entry.
+*/
+@keyframes border-creep {
+  from { box-shadow: 0 0 0 rgba(57,255,20,0); border-color: rgba(26,122,10,0.3); }
+  to   { box-shadow: 0 0 8px rgba(57,255,20,0.2); border-color: rgba(26,122,10,0.8); }
+}
+
+.anim-border-creep {
+  animation: border-creep 2s ease-out forwards;
+}
+
+/*
+  numbers-flicker — the Numbers sequence occasionally flickers between digits.
+  Each number dims briefly then restores, one at a time.
+*/
+@keyframes number-dim {
+  0%,   89%,  100% { opacity: 0.35; }
+  90%              { opacity: 0.08; }
+  92%              { opacity: 0.5;  }
+  94%              { opacity: 0.35; }
+}
+
+.anim-number-0 { animation: number-dim 13s steps(1) infinite; animation-delay: 0s;    }
+.anim-number-1 { animation: number-dim 13s steps(1) infinite; animation-delay: 1.2s;  }
+.anim-number-2 { animation: number-dim 13s steps(1) infinite; animation-delay: 2.5s;  }
+.anim-number-3 { animation: number-dim 13s steps(1) infinite; animation-delay: 3.8s;  }
+.anim-number-4 { animation: number-dim 13s steps(1) infinite; animation-delay: 5.1s;  }
+.anim-number-5 { animation: number-dim 13s steps(1) infinite; animation-delay: 6.4s;  }
+
+/*
+  entry-slide-in — entries appear from slightly below with opacity.
+  Cleaner than the existing fade-in for content blocks.
+*/
+@keyframes entry-slide-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.anim-entry-slide {
+  animation: entry-slide-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  opacity: 0;
+}
+
+.anim-entry-slide--delay-1 { animation-delay: 0.1s; }
+.anim-entry-slide--delay-2 { animation-delay: 0.25s; }
+.anim-entry-slide--delay-3 { animation-delay: 0.4s; }
+.anim-entry-slide--delay-4 { animation-delay: 0.6s; }
+
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   8. REDUCED MOTION OVERRIDES
+   Everything stops. Respect the preference.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-signal-corrupt,
+  .anim-text-glitch,
+  .anim-interference,
+  .anim-screen-breathe,
+  .anim-screen-flicker,
+  .anim-screen-roll,
+  .anim-vignette-pulse,
+  .anim-confirm-pulse,
+  .anim-failsafe-activate,
+  .anim-failsafe-shake,
+  .anim-transmission-appear,
+  .anim-cooldown-drain,
+  .anim-red-scan,
+  .anim-glyph-flicker,
+  .anim-glyph-watermark,
+  .anim-station-symbol,
+  .anim-header-number,
+  .anim-codex-drift,
+  .anim-ink-settle,
+  .anim-sepia-breathe,
+  .anim-ornament-appear,
+  .anim-stamp-appear,
+  .anim-phosphor-breathe,
+  .anim-status-dot,
+  .anim-border-creep,
+  .anim-number-0,
+  .anim-number-1,
+  .anim-number-2,
+  .anim-number-3,
+  .anim-number-4,
+  .anim-number-5,
+  .anim-entry-slide {
+    animation: none;
+    opacity:   1;
+    transform: none;
+    filter:    none;
+  }
+
+  .anim-cursor::after,
+  .anim-cursor--slow::after,
+  .anim-cursor--line::after,
+  .anim-cursor--pipe::after {
+    animation: none;
+    opacity:   1;
+  }
+}
