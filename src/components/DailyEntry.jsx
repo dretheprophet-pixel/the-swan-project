@@ -20,6 +20,8 @@ import {
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
+const dharmaNumbers = [4, 8, 15, 16, 23, 42];
+
 export default function DailyEntry({ entry, station, numbersConfig }) {
   const [numbersVisible, setNumbersVisible] = useState(false);
   const flashTimers = useRef([]);
@@ -151,7 +153,7 @@ function EntryMeta({ entry, station, isTerminal, numbersConfig, numbersVisible, 
               background:  numbersVisible ? '#f5c842'    : 'transparent',
             }}
           >
-            4 8 15
+            {dharmaNumbers.join(' ')}
           </div>
         </button>
       )}
