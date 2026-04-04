@@ -66,6 +66,21 @@ export const BADGE_SIZES = {
   lg: { outer: 128, inner: 104, symbol: 38, name: 10, number: 9 },
 };
 
+export const FAILSAFE_ENTRY = {
+  id: 'failsafe-incident',
+  title: 'FAILSAFE PROTOCOL INITIATED',
+  style: ENTRY_STYLE.TERMINAL,
+  station: 'SWAN',
+  numbers_flash: true,
+  isFailsafe: true,
+  body: `
+SYSTEM OVERRIDE: THE SWAN HAS BEEN COMPROMISED
+UNAUTHORIZED ENERGY DISCHARGE DETECTED
+MAGNETIC CONTAINMENT FAILURE IMMINENT
+REFER TO INCIDENT LOG 0001
+  `.trim(),
+};
+
 // Dharma octagon clip-path — used in multiple components
 export const OCTAGON_CLIP =
   'polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%)';

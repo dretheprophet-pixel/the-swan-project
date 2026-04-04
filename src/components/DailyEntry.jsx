@@ -42,6 +42,7 @@ export default function DailyEntry({ entry, station, numbersConfig }) {
   }
 
   const isTerminal = entry.style === ENTRY_STYLE.TERMINAL;
+  const isFailsafe = entry.isFailsafe === true;
 
   function handleFailsafe() {
     if (!entry.numbers_flash) return;
@@ -71,23 +72,25 @@ export default function DailyEntry({ entry, station, numbersConfig }) {
         onToggleNumbers={toggleNumbersOverlay}
       />
 
-      {/* Entry content */}
-      {isTerminal
-        ? <TerminalFrame entry={entry} />
-        : <CodexPage entry={entry} station={station} />
-      }
+     {/* Entry content */}
+     {(isFailsafe || isTerminal) ? (
+     <TerminalFrame entry={entry} />
+   ) : (
+     <CodexPage entry={entry} station={station} />
+   )}
 
       {/* Numbers sequence footer */}
       {numbersConfig?.shouldShow && <NumbersFooter />}
 
       {/* Failsafe */}
-      <div
-        className="flex justify-center py-4 animate-fade-in"
-        style={{ animationDelay: '2s', opacity: 0 }}
-      >
-        <FailSafeButton onActivate={handleFailsafe} />
-      </div>
-
+      {!isFailsafe && (
+  <div
+    className="flex justify-center py-4 animate-fade-in"
+    style={{ animationDelay: '2s', opacity: 0 }}
+  >
+    <FailSafeButton onActivate={handleFailsafe} />
+  </div>
+)}
     </div>
   );
 }

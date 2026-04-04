@@ -83,10 +83,12 @@ export default function App() {
   }
 
   const isTerminal = entry?.style === ENTRY_STYLE.TERMINAL;
+  const isFailsafe = entry?.isFailsafe === true;
+  const effectiveStation = isFailsafe ? STATIONS.SWAN : station;
 
   return (
     <div
-      className="min-h-screen flex flex-col"
+      className={`min-h-screen flex flex-col ${isFailsafe ? 'failsafe-active' : ''}`}
       style={{
         background: isTerminal
           ? 'radial-gradient(ellipse at center, #0a1f05 0%, #050a02 100%)'
@@ -96,7 +98,7 @@ export default function App() {
     >
       {loading && <BootScreen />}
 
-      <Header station={station} />
+      <Header station={effectiveStation} />
 
       <main className="flex-1 w-full max-w-3xl mx-auto px-4 py-8 space-y-6">
         {!loading && (
@@ -109,9 +111,9 @@ export default function App() {
               onReset={resetToDaily}
             />
             <DailyEntry
-              entry={entry}
-              station={station}
-              numbersConfig={numbersConfig}
+             entry={entry}
+             station={effectiveStation}
+             numbersConfig={numbersConfig}
             />
           </>
         )}

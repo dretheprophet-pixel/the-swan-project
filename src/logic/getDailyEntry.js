@@ -17,6 +17,16 @@ import { createSeededRandom, dateSeed, seededInt } from './seededRandom.js';
 export function getDailyEntry(date = new Date()) {
   const seed = dateSeed(date);
   const rng = createSeededRandom(seed);
+
+  // ────────────────────────────────────────────────
+  // Step B — Rare seeded Incident override (0.5%)
+  // Deterministic: same date → same seed → same result
+  // ────────────────────────────────────────────────
+  if (rng() < 0.005) {
+    return FAILSAFE_ENTRY;
+  }
+
+  // Normal daily entry selection
   const index = seededInt(rng, entries.length);
   return entries[index];
 }

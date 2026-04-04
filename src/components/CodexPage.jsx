@@ -17,6 +17,15 @@ export default function CodexPage({ entry, station, children }) {
     return () => clearTimeout(t);
   }, []);
 
+ if (entry?.isFailsafe) {
+  return (
+    <div className="p-8 text-center font-terminal tracking-widest text-phosphor-dim">
+      <h2 className="text-xl mb-4">ACCESS RESTRICTED</h2>
+      <p>FAILSAFE PROTOCOL IN EFFECT</p>
+      <p className="opacity-60 mt-2">REFER TO INCIDENT LOG 0001</p>
+    </div>
+  );
+} 
   const ornament = CODEX_ORNAMENTS[entry?.day % CODEX_ORNAMENTS.length] ?? '◈';
 
   return (

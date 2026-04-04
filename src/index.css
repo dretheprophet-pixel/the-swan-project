@@ -6,6 +6,15 @@
    THE SWAN PROJECT — Global Styles
    DHARMA Initiative Archive System v4.8.15
    ============================================ */
+   .failsafe-active {
+  animation: glitchPulse 0.8s infinite alternate;
+  filter: contrast(1.3) brightness(1.1) saturate(1.2);
+}
+
+@keyframes glitchPulse {
+  0%   { transform: none; }
+  100% { transform: skew(0.6deg, -0.6deg); }
+}
 
 :root {
   --phosphor: #39ff14;
