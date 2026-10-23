@@ -1,7 +1,7 @@
 # The Swan Project: Visual Direction
 
 **Issue #12 · Phase 2.5, UI Identity Overhaul**
-Status: draft for review, revision 2 · Desktop first (mobile is its own milestone)
+Status: approved for build, revision 3 · Desktop first (mobile is its own milestone)
 
 This brief defines what "LOST-authentic" means for the site. Issues #13–17 build against it. If a design question comes up during those issues, the answer should come from here. If it's not here, update this doc first.
 
@@ -172,7 +172,8 @@ Everyone shares the same day on the island. The daily transmission changes at **
 
 - The countdown, the date seed for the daily entry, the station, the Numbers mode, and the Incident roll **all** use island time, so they can never drift out of sync with each other.
 - Implementation note: `dateSeed()` currently uses the visitor's local date. Island time means computing the date in a fixed UTC offset instead. This belongs to whichever issue builds the countdown (#15), and it changes which entry each visitor sees on the switchover day. That's fine pre-launch.
-- **Decision needed:** which offset counts as island time (see Open questions).
+- **Island time is fixed UTC+10 (Sydney standard time),** a nod to Oceanic 815's departure city. It's a fixed offset, not the `Australia/Sydney` zone: the island doesn't observe daylight saving, so there's no hour jump twice a year.
+- For a US Eastern visitor, the new transmission arrives at **10am EDT in summer and 9am EST in winter**.
 
 ## 8. Layout (desktop first)
 
@@ -227,7 +228,4 @@ Recommended order: **#20 (station symbols) and #13 first** (they don't depend on
 
 ## Open questions
 
-1. **Which offset is island time?** Options:
-   - **UTC+10 (Sydney, where Oceanic 815 departed):** the transmission changes at 10am Eastern (9am in winter).
-   - **UTC:** changes at 8pm Eastern (7pm in winter).
-   - **US Eastern:** changes at your midnight, but every other visitor gets it at that same moment.
+None. All decisions for Phase 2.5 are recorded above.
