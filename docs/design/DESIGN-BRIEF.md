@@ -158,7 +158,7 @@ Our own versions, drawn as SVG, in the show's visual language:
 
 ### Station symbol set (designed together)
 
-All eight station symbols are designed **as one set, up front**, before #15 builds the badges. They're tracked in their own issue. Rules for the set:
+All eight station symbols are designed **as one set, up front**, before #15 builds the badges. They're tracked in #20. Rules for the set:
 - Original marks inspired by the show's station-logo language; not traced from it.
 - One weight and one grid: a 24×24 grid, 2px stroke at 24px, round caps. They must read at 20px.
 - Single color: they take the station accent, or ivory on dark.
@@ -216,14 +216,14 @@ All motion becomes an instant cut under `prefers-reduced-motion`. The Incident s
 
 | Issue | Takes from this brief |
 |---|---|
-| Station symbol set (new) | §6 symbol-set rules |
+| #20 Station symbol set | §6 symbol-set rules |
 | #13 Amber CRT | §3 Swan palette, §4 terminal fonts, §5 bunker and terminal textures, §8 room and monitor |
 | #14 Codex paper and glyphs | §3 DHARMA palette and station accents, §4 codex fonts, §5 codex textures, §8 folder |
 | #15 LOST anchors | §6 anchors (uses the symbol set), §7 island time |
 | #16 Hybrid mode logic | §1 (style = era), §9 transitions, the burned Incident folder |
 | #17 Micro-interactions | §9 motion and audio |
 
-Recommended order: **station symbol set and #13 first** (they don't depend on each other), then #14, #15, #16, #17.
+Recommended order: **#20 (station symbols) and #13 first** (they don't depend on each other), then #14, #15, #16, #17.
 
 ## Open questions
 
