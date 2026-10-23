@@ -81,7 +81,7 @@ src/
 ## Design system (current vs. planned)
 
 - **Current (live):** colors and fonts come from `tailwind.config.js`. The terminal palette is `phosphor` greens, the codex palette is `codex` paper/ink/sepia, and accents are `dharma` yellow/orange. Fonts: Share Tech Mono (terminal), IM Fell English (codex), Bebas Neue (DHARMA headings), Crimson Text (body). Extra classes live in `src/index.css`.
-- **Planned (Phase 2.5):** move from "Matrix green terminal" to authentic DHARMA artifact: amber/off-white CRT, stronger paper and glyph codex. **#12 is a written design brief, with no code**, and must be agreed before #13–17 change any styles.
+- **Planned (Phase 2.5):** move from "Matrix green terminal" to authentic DHARMA artifact. The source of truth is **`docs/design/DESIGN-BRIEF.md`** (palette, fonts, textures, anchors, motion), with a visual preview in `docs/design/specimen.html`. Build #13–17 against it; if a design question isn't answered there, update the brief first.
 - Hex colors are also hardcoded in some places (`App.jsx` backgrounds, `STATIONS[].color`, `BADGE_COLORS`, `CLASSIFICATION_STYLES`). A palette change has to cover these, not just Tailwind.
 
 ## Roadmap and order of work

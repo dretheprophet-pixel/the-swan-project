@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Swan Visual Direction</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=IBM+Plex+Mono:wght@400;500&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Jost:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --crt-bg:#0E0A04; --crt-amber:#FFB000; --crt-amber-dim:#B87D00; --crt-amber-faint:#6E4A00;
+    --crt-offwhite:#F2E6D0; --crt-alert:#E0443A; --bezel:#2B2620; --bezel-hi:#3A332A;
+    --paper:#F3ECDC; --manila:#D9C49A; --ink:#1F2430; --ink-faded:#4A4E57; --stamp:#A8352B; --desk:#1A1410;
+    --blue:#2E5A88; --teal:#2C6A6E; --avocado:#5E6B2F; --orange:#B5531A; --mustard:#C9971F;
+    --page:#141110; --page-text:#E8DFCF; --page-muted:#A39886; --rule:#2E2822;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--page); color:var(--page-text); font-family:"Jost",system-ui,sans-serif; line-height:1.5; }
+  .wrap { max-width:1100px; margin:0 auto; padding:48px 16px 80px; }
+  header.top { border-bottom:1px solid var(--rule); padding-bottom:24px; margin-bottom:40px; }
+  .eyebrow { font-size:12px; letter-spacing:.2em; text-transform:uppercase; color:var(--page-muted); }
+  h1 { font-weight:500; font-size:clamp(28px,4vw,40px); letter-spacing:.06em; text-transform:uppercase; margin:6px 0 8px; }
+  h2 { font-weight:500; font-size:14px; letter-spacing:.2em; text-transform:uppercase; color:var(--page-muted); margin:56px 0 16px; }
+  p.lede { color:var(--page-muted); max-width:62ch; margin:0; }
+
+  .eras { display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+  @media (max-width:820px){ .eras { grid-template-columns:1fr; } }
+
+  /* Terminal mock */
+  .monitor { background:linear-gradient(180deg,var(--bezel-hi),var(--bezel)); border-radius:18px; padding:22px 22px 14px; box-shadow:inset 0 1px 0 #ffffff14, 0 20px 40px #0008; }
+  .screen { position:relative; background:var(--crt-bg); border-radius:14px; padding:24px 22px; min-height:300px; overflow:hidden;
+    box-shadow:inset 0 0 40px #000, inset 0 0 2px #000; }
+  .screen::before { content:""; position:absolute; inset:0; pointer-events:none;
+    background:repeating-linear-gradient(0deg, transparent 0 2px, #0000003a 2px 3px); }
+  .screen::after { content:""; position:absolute; inset:0; pointer-events:none;
+    background:radial-gradient(ellipse at center, transparent 55%, #000000a0 100%), linear-gradient(115deg, transparent 40%, #ffffff08 48%, transparent 56%); }
+  .burnin { position:absolute; right:18px; bottom:14px; font-family:"VT323",monospace; font-size:22px; color:var(--crt-amber); opacity:.05; letter-spacing:.2em; }
+  .crt { position:relative; z-index:1; color:var(--crt-amber); text-shadow:0 0 4px #FFB00066; }
+  .crt .sys { font-family:"VT323",monospace; font-size:22px; line-height:1.25; margin:0; }
+  .crt .dim { color:var(--crt-amber-dim); text-shadow:none; }
+  .crt .msg { font-family:"IBM Plex Mono",monospace; font-size:14px; line-height:1.65; margin:14px 0; }
+  .crt .nums { font-family:"VT323",monospace; font-size:30px; letter-spacing:.35em; color:var(--crt-offwhite); text-shadow:0 0 6px #F2E6D055; margin:6px 0; }
+  .cursor { display:inline-block; width:.6em; height:1em; background:var(--crt-amber); vertical-align:-2px; animation:blink 1.1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity:0; } }
+  @media (prefers-reduced-motion: reduce){ .cursor { animation:none; } }
+  .bezel-row { display:flex; justify-content:space-between; align-items:center; margin-top:12px; font-size:11px; letter-spacing:.2em; text-transform:uppercase; color:#8d8273; }
+  .hw { display:flex; gap:8px; }
+  .hw span { border:1px solid #514839; border-radius:4px; padding:4px 10px; background:#2f2a23; box-shadow:inset 0 1px 0 #ffffff12; }
+  .led { width:7px; height:7px; border-radius:50%; background:var(--crt-amber); box-shadow:0 0 6px var(--crt-amber); display:inline-block; margin-right:8px; vertical-align:1px; }
+
+  /* Codex mock */
+  .desk { background:radial-gradient(ellipse at center, #2a211a 0%, var(--desk) 75%); border-radius:18px; padding:30px 26px 26px; min-height:100%; }
+  .folder { position:relative; background:var(--manila); border-radius:4px 10px 6px 6px; padding:14px; box-shadow:0 16px 30px #0009; }
+  .tab { position:absolute; top:-18px; left:18px; background:var(--manila); padding:4px 16px 2px; border-radius:6px 6px 0 0;
+    font-size:11px; letter-spacing:.2em; text-transform:uppercase; font-weight:500; color:var(--ink); }
+  .page { position:relative; background:var(--paper); padding:26px 26px 24px; color:var(--ink); }
+  .page::before { content:""; position:absolute; inset:0; pointer-events:none; opacity:.55; mix-blend-mode:multiply;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)' opacity='.12'/%3E%3C/svg%3E"); }
+  .doc-head { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; position:relative; }
+  .doc-label { font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:var(--ink-faded); }
+  .doc-title { font-family:"Jost",sans-serif; font-weight:500; text-transform:uppercase; letter-spacing:.15em; font-size:17px; margin:6px 0 14px; }
+  .stamp { font-weight:700; text-transform:uppercase; letter-spacing:.12em; font-size:13px; color:var(--stamp); border:2px solid var(--stamp);
+    padding:3px 8px; transform:rotate(-3deg); opacity:.85; white-space:nowrap; }
+  .typed { font-family:"Courier Prime",monospace; font-size:15.5px; line-height:1.6; margin:0 0 10px; text-shadow:0 0 .3px var(--ink); position:relative; }
+  .carbon { font-family:"Courier Prime",monospace; font-size:13px; color:var(--ink-faded); position:relative; margin:14px 0 0; border-top:1px solid #1F243026; padding-top:10px; }
+
+  /* Swatches */
+  .swatches { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:12px; }
+  .sw { border:1px solid var(--rule); border-radius:10px; overflow:hidden; background:#1b1714; }
+  .chip { height:64px; display:flex; align-items:flex-end; padding:8px 10px; font-family:"IBM Plex Mono",monospace; font-size:12px; }
+  .sw .meta { padding:8px 10px 10px; font-size:12px; }
+  .sw .name { font-weight:500; }
+  .sw .use { color:var(--page-muted); font-size:11.5px; }
+  .note { font-size:13px; color:var(--page-muted); margin-top:10px; }
+
+  /* Type */
+  .type-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:16px; }
+  @media (max-width:820px){ .type-grid { grid-template-columns:1fr; } }
+  .type { border:1px solid var(--rule); border-radius:10px; padding:18px; background:#1b1714; }
+  .type .lbl { font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:var(--page-muted); margin-bottom:10px; }
+  .type .s1 { font-size:30px; line-height:1.15; }
+  .type .s2 { font-size:15px; color:var(--page-muted); margin-top:8px; }
+
+  /* Anchors */
+  .anchors { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
+  @media (max-width:820px){ .anchors { grid-template-columns:repeat(2,1fr); } }
+  .anchor { border:1px solid var(--rule); border-radius:10px; padding:18px 14px; text-align:center; background:#1b1714; }
+  .anchor svg { display:block; margin:0 auto 10px; }
+  .anchor .t { font-size:13px; font-weight:500; letter-spacing:.08em; text-transform:uppercase; }
+  .anchor .d { font-size:12px; color:var(--page-muted); margin-top:4px; }
+  .flip { display:inline-flex; gap:3px; font-family:"VT323",monospace; font-size:30px; color:var(--crt-offwhite); margin:6px 0 14px; }
+  .flip span { background:#0b0805; border:1px solid #3a2f20; border-radius:4px; width:26px; height:40px; line-height:40px; position:relative; }
+  .flip span::after { content:""; position:absolute; left:0; right:0; top:50%; border-top:1px solid #000; }
+  .flip .c { background:none; border:none; width:10px; color:var(--crt-amber-dim); }
+  .flip .c::after { display:none; }
+  .stencil { font-family:"Jost",sans-serif; font-weight:700; font-size:22px; letter-spacing:.18em; color:#c9c1b2; margin:14px 0 22px;
+    -webkit-mask:repeating-linear-gradient(90deg,#000 0 13px,transparent 13px 15px); mask:repeating-linear-gradient(90deg,#000 0 13px,transparent 13px 15px); }
+  footer { margin-top:56px; padding-top:20px; border-top:1px solid var(--rule); font-size:12.5px; color:var(--page-muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="eyebrow">The Swan Project · Issue #12 · Draft</div>
+    <h1>Two eras, one archive</h1>
+    <p class="lede">Terminal entries are the Swan in 2004: amber phosphor, worn and humming. Codex entries are the Initiative in the 1970s: crisp typed paperwork in a manila folder. This sheet shows the palette, type and anchors from DESIGN-BRIEF.md.</p>
+  </header>
+
+  <section class="eras" aria-label="Mode previews">
+    <div class="monitor">
+      <div class="screen">
+        <div class="burnin" aria-hidden="true">4 8 15 16 23 42</div>
+        <div class="crt">
+          <p class="sys">&gt;: STATION 3 — THE SWAN</p>
+          <p class="sys dim">TRANSMISSION 005 · CYCLE 0412</p>
+          <p class="msg">The counter did not reset at the usual moment. For eleven seconds, the station was silent. Nobody wrote it down. I am writing it down.</p>
+          <p class="nums">4 8 15 16 23 42</p>
+          <p class="sys">&gt;: <span class="cursor" aria-hidden="true"></span></p>
+        </div>
+      </div>
+      <div class="bezel-row"><span><span class="led" aria-hidden="true"></span>Daily transmission</span><div class="hw"><span>◂ Prev</span><span>Today</span><span>Next ▸</span></div></div>
+    </div>
+
+    <div class="desk">
+      <div class="folder">
+        <div class="tab">The Pearl</div>
+        <div class="page">
+          <div class="doc-head">
+            <div><div class="doc-label">Station 5 · Observation report</div></div>
+            <div class="stamp">Internal</div>
+          </div>
+          <h3 class="doc-title">On the nature of the experiment</h3>
+          <p class="typed">Subjects in the adjoining station continue to press the button at the prescribed interval. None have questioned the procedure. Recommend continued observation; do not intervene.</p>
+          <p class="typed">Notebooks to be collected weekly and sent via the pneumatic tube.</p>
+          <p class="carbon">cc: Station 3 · Behavioral Sciences</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <h2>Terminal palette · Swan, 2004</h2>
+  <div class="swatches">
+    <div class="sw"><div class="chip" style="background:#0E0A04;color:#FFB000">#0E0A04</div><div class="meta"><div class="name">crt-bg</div><div class="use">Screen</div></div></div>
+    <div class="sw"><div class="chip" style="background:#FFB000;color:#0E0A04">#FFB000</div><div class="meta"><div class="name">crt-amber</div><div class="use">Primary text · 10.8:1</div></div></div>
+    <div class="sw"><div class="chip" style="background:#B87D00;color:#0E0A04">#B87D00</div><div class="meta"><div class="name">crt-amber-dim</div><div class="use">Secondary · 5.6:1</div></div></div>
+    <div class="sw"><div class="chip" style="background:#6E4A00;color:#F2E6D0">#6E4A00</div><div class="meta"><div class="name">crt-amber-faint</div><div class="use">Borders only</div></div></div>
+    <div class="sw"><div class="chip" style="background:#F2E6D0;color:#0E0A04">#F2E6D0</div><div class="meta"><div class="name">crt-offwhite</div><div class="use">Accent: warnings, Numbers</div></div></div>
+    <div class="sw"><div class="chip" style="background:#E0443A;color:#0E0A04">#E0443A</div><div class="meta"><div class="name">crt-alert</div><div class="use">Incident only</div></div></div>
+    <div class="sw"><div class="chip" style="background:#2B2620;color:#F2E6D0">#2B2620</div><div class="meta"><div class="name">bezel</div><div class="use">Monitor casing</div></div></div>
+  </div>
+  <p class="note">Amber is the voice, off-white is the shout, red is the emergency.</p>
+
+  <h2>Codex palette · DHARMA, 1970s</h2>
+  <div class="swatches">
+    <div class="sw"><div class="chip" style="background:#F3ECDC;color:#1F2430">#F3ECDC</div><div class="meta"><div class="name">paper</div><div class="use">Document page</div></div></div>
+    <div class="sw"><div class="chip" style="background:#D9C49A;color:#1F2430">#D9C49A</div><div class="meta"><div class="name">manila</div><div class="use">Folder, tabs</div></div></div>
+    <div class="sw"><div class="chip" style="background:#1F2430;color:#F3ECDC">#1F2430</div><div class="meta"><div class="name">ink</div><div class="use">Typed text · 13.2:1</div></div></div>
+    <div class="sw"><div class="chip" style="background:#4A4E57;color:#F3ECDC">#4A4E57</div><div class="meta"><div class="name">ink-faded</div><div class="use">Secondary · 7.1:1</div></div></div>
+    <div class="sw"><div class="chip" style="background:#A8352B;color:#F3ECDC">#A8352B</div><div class="meta"><div class="name">stamp-red</div><div class="use">Stamps · 5.6:1</div></div></div>
+    <div class="sw"><div class="chip" style="background:#1A1410;color:#D9C49A">#1A1410</div><div class="meta"><div class="name">desk</div><div class="use">Behind the folder</div></div></div>
+  </div>
+
+  <h2>Station accents</h2>
+  <div class="swatches">
+    <div class="sw"><div class="chip" style="background:#2E5A88;color:#F3ECDC">#2E5A88</div><div class="meta"><div class="name">dharma-blue</div><div class="use">Hydra, Staff · text OK</div></div></div>
+    <div class="sw"><div class="chip" style="background:#2C6A6E;color:#F3ECDC">#2C6A6E</div><div class="meta"><div class="name">dharma-teal</div><div class="use">Pearl, Looking Glass · text OK</div></div></div>
+    <div class="sw"><div class="chip" style="background:#5E6B2F;color:#F3ECDC">#5E6B2F</div><div class="meta"><div class="name">dharma-avocado</div><div class="use">Arrow, Orchid · text OK</div></div></div>
+    <div class="sw"><div class="chip" style="background:#B5531A;color:#F3ECDC">#B5531A</div><div class="meta"><div class="name">dharma-orange</div><div class="use">Flame · large text only</div></div></div>
+    <div class="sw"><div class="chip" style="background:#C9971F;color:#1F2430">#C9971F</div><div class="meta"><div class="name">dharma-mustard</div><div class="use">Swan · fills only</div></div></div>
+  </div>
+
+  <h2>Typography</h2>
+  <div class="type-grid">
+    <div class="type"><div class="lbl">Terminal display · VT323</div><div class="s1" style="font-family:'VT323',monospace;font-size:36px;color:#FFB000">&gt;: ENTER THE SEQUENCE</div><div class="s2">Prompts, titles, the Numbers. 20px minimum.</div></div>
+    <div class="type"><div class="lbl">Terminal body · IBM Plex Mono</div><div class="s1" style="font-family:'IBM Plex Mono',monospace;font-size:17px;line-height:1.6;color:#FFB000">Every 108 minutes, you will enter the sequence. You will not ask why.</div><div class="s2">Long transmissions.</div></div>
+    <div class="type"><div class="lbl">Codex body · Courier Prime</div><div class="s1" style="font-family:'Courier Prime',monospace;font-size:18px;line-height:1.6">Subjects continue to press the button at the prescribed interval.</div><div class="s2">Typed documents, 16–17px.</div></div>
+    <div class="type"><div class="lbl">DHARMA labels · Jost</div><div class="s1" style="font-weight:500;letter-spacing:.15em;text-transform:uppercase;font-size:24px">Station 5 · The Pearl</div><div class="s2">Station names, headings, stamps.</div></div>
+  </div>
+
+  <h2>Committed anchors (#15)</h2>
+  <div class="anchors">
+    <div class="anchor">
+      <svg width="64" height="64" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="29" fill="none" stroke="#C9971F" stroke-width="2.5"/><polygon points="22.5,9 41.5,9 55,22.5 55,41.5 41.5,55 22.5,55 9,41.5 9,22.5" fill="none" stroke="#C9971F" stroke-width="2.5"/><circle cx="32" cy="32" r="7" fill="none" stroke="#E8DFCF" stroke-width="2.5"/></svg>
+      <div class="t">Octagon ring</div><div class="d">Frames every station badge</div>
+    </div>
+    <div class="anchor">
+      <div class="flip" aria-hidden="true"><span>0</span><span>4</span><span class="c">:</span><span>1</span><span>6</span></div>
+      <div class="t">Countdown clock</div><div class="d">Time until the next transmission</div>
+    </div>
+    <div class="anchor">
+      <svg width="64" height="64" viewBox="0 0 64 64" aria-hidden="true"><rect x="8" y="8" width="48" height="48" rx="4" fill="none" stroke="#8d8273" stroke-width="2"/><circle cx="24" cy="32" r="8" fill="none" stroke="#FFB000" stroke-width="2.5"/><path d="M32 32h20M44 32v6M49 32v4" stroke="#FFB000" stroke-width="2.5" fill="none"/></svg>
+      <div class="t">Fail-safe key</div><div class="d">Key in a recessed panel</div>
+    </div>
+    <div class="anchor">
+      <div class="stencil">QUARANTINE</div>
+      <div class="t">Stencil</div><div class="d">Boot screen, hatch door</div>
+    </div>
+  </div>
+
+  <footer>Original marks drawn for this project, inspired by the show's visual language. Full rationale in docs/design/DESIGN-BRIEF.md.</footer>
+</div>
+</body>
+</html>
