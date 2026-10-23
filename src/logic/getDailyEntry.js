@@ -6,6 +6,7 @@
 
 import entries from '../data/lost_entries.json';
 import { createSeededRandom, dateSeed, seededInt } from './seededRandom.js';
+import { FAILSAFE_ENTRY } from '../constants/index.js';
 
 /**
  * Returns today's lore entry.

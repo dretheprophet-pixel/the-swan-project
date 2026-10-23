@@ -11,7 +11,7 @@ import Footer     from './components/Footer.jsx';
 import DailyEntry from './components/DailyEntry.jsx';
 
 import { getDailyEntry, getEntryByIndex, getEntryCount } from './logic/getDailyEntry.js';
-import { getStationForEntry } from './logic/getStationOfDay.js';
+import { getStationForEntry, getStationById } from './logic/getStationOfDay.js';
 import { getNumbersMode }     from './logic/getNumbersMode.js';
 
 import { BOOT_DELAY_MS, ENTRY_STYLE, NAV, OCTAGON_CLIP } from './constants/index.js';
@@ -84,7 +84,7 @@ export default function App() {
 
   const isTerminal = entry?.style === ENTRY_STYLE.TERMINAL;
   const isFailsafe = entry?.isFailsafe === true;
-  const effectiveStation = isFailsafe ? STATIONS.SWAN : station;
+  const effectiveStation = isFailsafe ? getStationById('swan') : station;
 
   return (
     <div
